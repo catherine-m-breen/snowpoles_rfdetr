@@ -31,7 +31,7 @@ import numpy as np
 import supervision as sv
 from PIL import Image
 
-from rfdetr import RFDETRSegMedium
+from rfdetr import RFDETRSegMedium, RFDETRSegSmall, RFDETRSegNano
 
 # --- 1. Paths and Configuration ---
 dataset = '/discover/nobackup/cmbreen/rfdetr_snow/dataset_rfd_detr'

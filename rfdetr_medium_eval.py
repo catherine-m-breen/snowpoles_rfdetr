@@ -5,12 +5,23 @@ import numpy as np
 import supervision as sv
 from PIL import Image
 
-from rfdetr import RFDETRSegMedium
+from rfdetr import RFDETRSegMedium, RFDETRSegNano
 
+# --- 1. Paths and Configuration ---
+dataset = '/discover/nobackup/cmbreen/rfdetr_snow/dataset_rfd_detr'
+model_path = '/discover/nobackup/cmbreen/rfdetr_snow/rf-detr-seg-nano.pt'
+outputs = '/discover/nobackup/cmbreen/rfdetr_snow/outputs/nano_outputs'
+# exp_name = 'SegMedium_bs16_gas2_e200' # Updated to bs16 based on 448 res
+
+os.makedirs(outputs, exist_ok=True)
+
+# --- 2. Initialize Model ---
+# Ensure resolution matches your dataset!
+model = RFDETRSegNano(resolution=448)
 
 # --- 4. Post-Training Visualization on 5 Examples ---
 # Once training finishes, we load the BEST weights it just saved
-best_model_path = os.path.join(outputs, exp_name, 'weights', 'best.pt')
+best_model_path = '/discover/nobackup/cmbreen/rfdetr_snow/output/checkpoint_best_total.pth'
 if os.path.exists(best_model_path):
     print(f"Loading best weights for inference from: {best_model_path}")
     model.load(best_model_path)
@@ -44,5 +55,3 @@ if os.path.exists(best_model_path):
         cv2.imwrite(out_path, annotated_image)
         
     print(f"Visualizations saved to: {viz_out_dir}")
-else:
-    print("Could not find best.pt for visualization. Check training logs.")
