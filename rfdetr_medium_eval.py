@@ -38,8 +38,8 @@ if os.path.exists(best_model_path):
     
     os.makedirs(viz_out_dir, exist_ok=True)
     
-    polygon_annotator = sv.PolygonAnnotator()
-    keypoint_annotator = sv.KeyPointAnnotator() # Assuming sv has keypoint annotator available
+    # polygon_annotator = sv.PolygonAnnotator()
+    # keypoint_annotator = sv.KeyPointAnnotator() # Assuming sv has keypoint annotator available
     
     print("Generating predictions for 5 test samples...")
     for img_path in sample_images:
