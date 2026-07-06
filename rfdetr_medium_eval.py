@@ -24,7 +24,7 @@ os.makedirs(viz_out_dir, exist_ok=True)
 best_model_path = '/discover/nobackup/cmbreen/rfdetr_snow/output/checkpoint_best_total.pth'
 if os.path.exists(best_model_path):
     print(f"Loading best weights for inference from: {best_model_path}")
-    model = RFDETRSegNano(weights=best_model_path, resolution=448)
+    model = RFDETRSegNano(pretrain_weights=best_model_path, resolution=448)
     
     # Grab 5 random images from the test set
     test_images_dir = os.path.join(dataset, 'test')
