@@ -19,6 +19,11 @@ os.makedirs(viz_out_dir, exist_ok=True)
 # Ensure resolution matches your dataset!
 #model = RFDETRSegNano(resolution=448)
 
+color = sv.ColorPalette.from_hex([
+    "#ffff00", "#ff9b00", "#ff8080", "#ff66b2", "#ff66ff", "#b266ff",
+    "#9999ff", "#3399ff", "#66ffff", "#33ff99", "#66ff66", "#99ff00"
+])
+
 # --- 4. Post-Training Visualization on 5 Examples ---
 # Once training finishes, we load the BEST weights it just saved
 best_model_path = '/discover/nobackup/cmbreen/rfdetr_snow/output/checkpoint_best_total.pth'
@@ -42,15 +47,24 @@ if os.path.exists(best_model_path):
         image = cv2.imread(img_path)
         
         # Run prediction
-        result = model.predict(image)
+        detections = model.predict(image)
         
-        # Annotate
-        annotated_image = polygon_annotator.annotate(scene=image, detections=result)
-        # Note: Depending on your supervision version, keypoint annotation might differ slightly
-        # annotated_image = keypoint_annotator.annotate(scene=annotated_image, keypoints=result.keypoints)
+       # Annotate
+        thickness = sv.calculate_optimal_line_thickness(resolution_wh=image.size)
+        color_annotator = sv.ColorAnnotator(color=color)
+        polygon_annotator = sv.PolygonAnnotator(color=color, thickness=thickness)
         
-        # Save
-        out_path = os.path.join(viz_out_dir, f"pred_{img_name}")
-        cv2.imwrite(out_path, annotated_image)
+        annotated_image = image.copy()
+        annotated_image = color_annotator.annotate(scene=annotated_image, detections=detections)
+        annotated_image = polygon_annotator.annotate(scene=annotated_image, detections=detections)
+        
+        # Create thumbnail and save
+        annotated_image.thumbnail((800, 800))
+        
+        base_name = os.path.basename(img_path)
+        out_name = f"pred_{i+1}_{base_name}"
+        save_path = os.path.join(viz_out_dir, out_name)
+
+        annotated_image.save(save_path)
         
     print(f"Visualizations saved to: {viz_out_dir}")
