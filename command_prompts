@@ -1,0 +1,4 @@
+scp -r /Users/cmbreen/.roboflow/models/rf-detr-seg-medium.pt cmbreen@discover.nccs.nasa.gov:/discover/nobackup/cmbreen/rfdetr_snow
+scp -r /Users/cmbreen/.roboflow/models/rf-detr-keypoint-preview-xlarge.pth cmbreen@discover.nccs.nasa.gov:/discover/nobackup/cmbreen/rfdetr_snow
+
+rsync -av --progress --exclude='viz_samples' --exclude='test_inspection' /Volumes/MyBook/snowpoles_dataset_master/dataset_rfd_detr cmbreen@discover.nccs.nasa.gov:/discover/nobackup/cmbreen/rfdetr_snow/
