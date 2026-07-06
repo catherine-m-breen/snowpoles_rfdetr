@@ -52,14 +52,15 @@ model = RFDETRSegMedium(resolution=448)
 print("Starting training on Discover GPU...")
 model.train(
     dataset_dir=dataset,
-    epochs=20,
-    batch_size=16,          # 448x448 uses less memory, batch size 16 should easily fit
+    epochs=10,
+    batch_size=32,          # 448x448 uses less memory, batch size 16 should easily fit
     grad_accum_steps=2,
-    patience=20,            # EARLY STOPPING: Stop if no improvement in 20 epochs
+    patience=5,            # EARLY STOPPING: Stop if no improvement in 20 epochs
     project=outputs,        # Save output charts/weights here
     name=exp_name,          # Folder name for this specific experiment
     workers=16,              # HPC optimization: speeds up image loading to feed GPU
-    device="cuda:0"         # Explicitly target the first GPU
+    device='cuda',         # Explicitly target the first GPU
+    fraction = 0.01
 )
 print(f"Training complete. Weights and loss charts are saved in {outputs}/{exp_name}")
 
