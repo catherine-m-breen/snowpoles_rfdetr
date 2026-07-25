@@ -86,8 +86,13 @@ if saved_configs == 'Y':
 if saved_configs == "N": 
     camera_name = input("Enter the camera id, such as CameraA or TLS-A1N or Site1, etc (no quotes needed): ")
     camera_season = input("Enter the water year (e.g., 2019-2020, 2021-2022 etc): ")
-    camera_image_path = input(r'Enter the full camera path from your computer. Make sure to enter the full path such as /Users/Documents/[Camera_Folder] on Mac or C:\Users\Documents\Camera_Folder on Windows ').strip().strip('"').strip("'")
-    
+    raw_path = input(r'Enter the full camera path from your computer. Make sure to enter the full path such as /Users/Documents/[Camera_Folder] on Mac or C:\Users\Documents\Camera_Folder on Windows ').strip().strip('"').strip("'")
+    # 2. Fix common Mac copy-paste errors (missing leading slash)
+    if raw_path.startswith("Volumes/") or raw_path.startswith("Users/"):
+        raw_path = "/" + raw_path
+        
+    # 3. Expand '~' if they used it (e.g., ~/Documents/...)
+    camera_image_path = os.path.expanduser(raw_path)
     total_pole_cm_input = input("What is the length of the full pole in centimeters? (Put NA if non-applicable): ")
     if total_pole_cm_input != 'NA':
         total_pole_cm = float(total_pole_cm_input)
