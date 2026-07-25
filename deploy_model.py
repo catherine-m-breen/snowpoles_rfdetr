@@ -128,36 +128,30 @@ Download model
 
 '''
 ######## download the model ##########
-import requests
 
-# We will save the model in the same folder as the script
-best_model_path = 'checkpoint_best_total.pth'
-
-# REPLACE THIS LINK with your actual Zenodo download link!
-zenodo_url = "https://zenodo.org/records/YOUR_RECORD_ID/files/checkpoint_best_total.pth?download=1"
-
-# Check if the file already exists
-if not os.path.exists(best_model_path):
-    print(f"\nModel weights not found. Downloading from Zenodo (134 MB)...")
+def download_models(): 
+    '''
+    see the Zenodo page for the latest models
+    '''
+    root =  os.getcwd()
+    save_path = f"{root}"
+    if not os.path.exists(save_path):
+        os.makedirs(save_path, exist_ok=True)
+    url = 'https://zenodo.org/records/21570659/files/checkpoint_best_total.pth'
     
-    # Stream the download so we can show a progress bar
-    response = requests.get(zenodo_url, stream=True)
-    total_size = int(response.headers.get('content-length', 0))
+    # download if does not exist  
+    if not (Path(save_path) / 'checkpoint_best_total.pth').exists():
     
-    with open(best_model_path, 'wb') as file, tqdm.tqdm(
-        desc="Downloading Model",
-        total=total_size,
-        unit='iB',
-        unit_scale=True,
-        unit_divisor=1024,
-    ) as progress_bar:
-        for data in response.iter_content(chunk_size=1024):
-            size = file.write(data)
-            progress_bar.update(size)
-            
-    print("Download complete!\n")
-else:
-    print(f"\nFound local model weights at: {best_model_path}")
+        wget_command = f'wget {url} -P {save_path}'
+        output_file = os.path.join(save_path, url.split("/")[-1]).replace("\\","/")
+        curl_command = f'curl -L --ssl-no-revoke "{url}" -o "{output_file}"'
+        print(curl_command)
+        os.system(curl_command)
+        return print('\n model downloaded! \n')
+    else:
+        return print('model already saved')
+
+best_model_path = download_models()
 
 # Create the nested directory structure automatically
 os.makedirs(csv_dir, exist_ok=True)
