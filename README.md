@@ -5,9 +5,11 @@
 
 This script processes a time series of trail camera images to automatically detect snow poles and estimate the depth of the snow. Instead of manually clicking through hundreds of images, this tool uses a fine-tuned RF-DETR (Robust Feature Detection Transformer) model to identify the visible portion of the snow pole, calculates the snow depth based on a physical conversion factor, and exports the data straight to a csv. 
 
-* It helps if you know: height of pole (in cm), location, and camera ID! 
+Note: It helps if you know: height of pole (in cm), location, and camera ID! 
 
-<p>Some Key Features </p> 
+<p>
+## Some Key Features
+ </p> 
 <p>- Automated calibration: Click the top and bottom of a snow-free image to automatically calculate the pixel-to-centimeter scale.</p> 
 <p>- Snow Depth csv: Outputs a clean Pandas dataframe (.csv) with snow depth in centimeters.</p> 
 <p>- Example photos: Automatically saves bounding box visualizations for a subset of images so you can verify the model is working correctly.</p> 
