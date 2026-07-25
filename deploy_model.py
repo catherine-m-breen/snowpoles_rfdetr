@@ -10,7 +10,6 @@ from PIL import Image
 import os
 import cv2
 import glob
-import numpy as np
 import supervision as sv
 from rfdetr import RFDETRSegNano
 import matplotlib.pyplot as plt
@@ -61,8 +60,13 @@ if saved_configs == 'Y':
     ref_img_path_actual = 9 
     other_info = 'First 9 photos are foggy'
     location_information ='(39.032, -108.216)'
-    viz_out_dir = '/Users/cmbreen/Documents/snowpoles/cosgrove/rfdetr_outputs'
-    snow_depth_output = '/Users/cmbreen/Documents/snowpoles/cosgrove/rfdetr_snowdepth'
+    
+    # Updated to create nested output structure
+    base_output_dir = Path("outputs")
+    camera_out_dir = base_output_dir / camera_name
+    csv_dir = camera_out_dir / 'csv'
+    viz_dir = camera_out_dir / 'sample_outputs'
+    
     print("-" * 20)
     print("Configurations Loaded Automatically")
     print(f"  Camera Name:          {camera_name}")
@@ -74,18 +78,15 @@ if saved_configs == 'Y':
     print(f"  Reference Image Idx:  {ref_img_path_actual}")
     print(f"  Location Info:        {location_information}")
     print(f"  Other Info:           {other_info}")
-    print(f"  Viz Output Dir:       {viz_out_dir}")
-    print(f"  Data Output Dir:      {snow_depth_output}")
+    print(f"  Base Output Dir:      {base_output_dir}")
     print("-" * 20)
 
 ##### Start and metadata ####### 
 if saved_configs == "N": 
     camera_name = input("Enter the camera id, such as CameraA or TLS-A1N or Site1, etc (no quotes needed): ")
     camera_season = input("Enter the water year (e.g., 2019-2020, 2021-2022 etc): ")
-    camera_image_path = input(r'Enter the full camera path from your computer. Make sure to enter the full path such as /Users/Documents/[Camera_Folder] on Mac or C:\Users\Documents\Camera_Folder on Windows ').strip('"').strip("'")
+    camera_image_path = input(r'Enter the full camera path from your computer. Make sure to enter the full path such as /Users/Documents/[Camera_Folder] on Mac or C:\Users\Documents\Camera_Folder on Windows ').strip().strip('"').strip("'")
     
-    #pole_info = input("Do you know the length of the full pole or does this pole have a 10 centimeter top? Type Y for Yes and N for No.")
-    #pole_type = input("What is the length of the full pole in centimeters? (Put NA if non-applicable): ")
     total_pole_cm_input = input("What is the length of the full pole in centimeters? (Put NA if non-applicable): ")
     if total_pole_cm_input != 'NA':
         total_pole_cm = float(total_pole_cm_input)
@@ -105,9 +106,17 @@ if saved_configs == "N":
     print("-" * 20)
     other_info = input("Is there any other information to store for this camera? For example, information related to malfunction etc. \n Put NA if nothing: ")
     location_information = input("Enter location information (long, lat) format, if don't know just put NA: ")
+    
     #### output information ####
-    viz_out_dir = Path(input(r"Enter visualization output folder path: ").strip('"').strip("'"))
-    snow_depth_output = Path(input(r"Enter snow depth output folder path: ").strip('"').strip("'"))
+    # Ask for base directory, default to "outputs" in the current folder if left blank
+    base_out_input = input(r"Enter base output folder path (press Enter to just use 'outputs' in current folder): ").strip().strip('"').strip("'")
+    base_output_dir = Path(base_out_input) if base_out_input else Path("outputs")
+    
+    # Automatically generate the nested folder structure
+    camera_out_dir = base_output_dir / camera_name
+    csv_dir = camera_out_dir / 'csv'
+    viz_dir = camera_out_dir / 'sample_outputs'
+    
     print("-" * 20)
     print("Configurations for Script")
     print("-" * 20)
@@ -119,6 +128,7 @@ if saved_configs == "N":
 images = sorted(glob.glob(os.path.join(Path(camera_image_path), '*.[jJ][pP]*[gG]')))
 if len(images) == 0:
     print(f"WARNING: No images found in {camera_image_path}! Check that the path is correct.")
+    exit()
 else:
     # Set the exact path to the reference image so later code can use it
     ref_img_path = images[ref_img_path_actual - 1]
@@ -133,15 +143,13 @@ if pixel_centimeter_conversion == 'NA':
     print("-" * 20)
     calibration_target = float(input("Enter the known length in cm you will click (e.g., total pole length or 10): "))
 
-
-    # Read and convert image for matplotlib
-    ref_image_cv = cv2.imread(Path(ref_img_path))
+    # Read and convert image for matplotlib (Convert Path to string to avoid cv2 errors)
+    ref_image_cv = cv2.imread(str(ref_img_path))
     ref_image_rgb = cv2.cvtColor(ref_image_cv, cv2.COLOR_BGR2RGB)
     
     print("\n*** INSTRUCTIONS ***")
     print("A window will open. Click exactly TWO points: the TOP and BOTTOM of your calibration target.")
     print("Middle click or Right click to undo a point if you mess up.")
-
      
     # Plot the reference image and use ginput
     fig, ax = plt.subplots(figsize=(10, 8))
@@ -177,9 +185,10 @@ if pixel_centimeter_conversion == 'NA':
 ######## download the model ##########
 
 best_model_path = '/Users/cmbreen/code/snowpoles_rfdetr/checkpoint_best_total.pth'
-# Removed the trailing /* here so os.path.join below works properly
 
-os.makedirs(viz_out_dir, exist_ok=True)
+# Create the nested directory structure automatically
+os.makedirs(csv_dir, exist_ok=True)
+os.makedirs(viz_dir, exist_ok=True)
 
 color = sv.ColorPalette.from_hex([
     "#ffff00", "#ff9b00", "#ff8080", "#ff66b2", "#ff66ff", "#b266ff",
@@ -192,7 +201,7 @@ if os.path.exists(best_model_path):
     
     # --- CALCULATE CONVERSION FACTOR FROM REFERENCE IMAGE ---
     print(f"\nAnalyzing bare ground reference image: {ref_img_path}")
-    ref_image = cv2.imread(ref_img_path)
+    ref_image = cv2.imread(str(ref_img_path))
     if ref_image is None:
         raise ValueError("Could not read the reference image. Please check the path.")
         
@@ -216,13 +225,15 @@ if os.path.exists(best_model_path):
     images = glob.glob(os.path.join(camera_image_path, '*.[jJ][pP]*[gG]'))
     sample_images = images #[:5] 
     
-    print("\nGenerating predictions for 5 test samples...")
-    csv_file_path = os.path.join(snow_depth_output, f"{camera_name}_snowdepth.csv")
+    print(f"\nGenerating predictions for {len(sample_images)} test samples...")
+    
+    # Set the CSV output path using the dynamic csv directory
+    csv_file_path = os.path.join(csv_dir, f"{camera_name}_snowdepth.csv")
     results_data = [] 
     
     for i, img_path in tqdm.tqdm(enumerate(sample_images)):
         base_name = os.path.basename(img_path)
-        print(f"\nProcessing {base_name}...")
+        # print(f"\nProcessing {base_name}...") # Commented out so it doesn't mess up tqdm progress bar
         image = cv2.imread(img_path)
         
         detections = model.predict(image)
@@ -238,10 +249,7 @@ if os.path.exists(best_model_path):
             # Snow depth is total height minus what is currently visible
             snow_depth_cm = total_pole_cm - visible_length_cm
             
-            print(f"  Pole Detection {j+1}:")
-            print(f"    - Length in pixels: {pole_length_px:.2f} px")
-            print(f"    - Visible length: {visible_length_cm:.2f} cm")
-            print(f"    - Estimated Snow Depth: {snow_depth_cm:.2f} cm")
+            # Append data to list for dataframe
             results_data.append({
                 'camera_id': camera_name,
                 'filename': base_name,
@@ -250,9 +258,8 @@ if os.path.exists(best_model_path):
                 'conversion': conversion_factor
             })
         
-        
         # Annotate
-        if i % 20: ## save every 20 for examples  
+        if i % 20 == 0: ## save every 20 for examples (fixed from "if i % 20:" which skips the 0th and multiples of 20)
             h, w = image.shape[:2]
             thickness = sv.calculate_optimal_line_thickness(resolution_wh=(w, h))
             color_annotator = sv.ColorAnnotator(color=color)
@@ -270,16 +277,17 @@ if os.path.exists(best_model_path):
             pil_img.thumbnail((800, 800))
         
             out_name = f"pred_{i+1}_{base_name}"
-            save_path = os.path.join(viz_out_dir, out_name)
+            # Save to the new dynamic sample_outputs directory
+            save_path = os.path.join(viz_dir, out_name)
 
             pil_img.save(save_path)
-            print(f"  -> Saved visualization: {out_name}")
 
     df = pd.DataFrame(results_data)
     df.to_csv(csv_file_path, index=False)
     
-    print(f"\nAll visualizations saved to: {viz_out_dir}")
-    print(f"Data saved to CSV using pandas: {csv_file_path}")
-    print(f"\nAll visualizations saved to: {viz_out_dir}")
+    print("\n" + "-" * 20)
+    print(f"Data saved to CSV: {csv_file_path}")
+    print(f"Example visualizations saved to: {viz_dir}")
+    print("-" * 20)
 else:
     print(f"Error: Model not found at {best_model_path}")
