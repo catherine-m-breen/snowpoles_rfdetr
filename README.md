@@ -6,7 +6,7 @@
 This script processes a time series of trail camera images to automatically detect snow poles and estimate the depth of the snow. Instead of manually clicking through hundreds of images, this tool uses a fine-tuned RF-DETR (Robust Feature Detection Transformer) model to identify the visible portion of the snow pole, calculates the snow depth based on a physical conversion factor, and exports the data straight to a csv. 
 
 
-<img src="https://github.com/catherine-m-breen/snowpoles_rfdetr/blob/main/pred_5_TLS-A1N_WSCT1734.JPG"> 
+<img src="https://github.com/catherine-m-breen/snowpoles_rfdetr/blob/main/sample_images/pred_5_TLS-A1N_WSCT1734.JPG"> 
 
 
 ##### Note: It helps if you know: height of pole (in cm), location, and camera ID! 

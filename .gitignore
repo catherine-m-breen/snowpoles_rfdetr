@@ -7,7 +7,5 @@ WSCT1025.JPG
 WSCT0785.JPG 
 checkpoint_best_total.pth
 .gradio
-app.py
-test_inspection.py
 command_prompts
 outputs
