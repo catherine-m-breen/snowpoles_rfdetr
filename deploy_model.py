@@ -47,6 +47,7 @@ We need to know two things related to the metadata
 4. Anything else (saved as dictionary); things like lat/long, reference notes etc
 '''
 
+
 saved_configs = input('Do you want to run with presaved configurations? Type "Y" if you have updated the code, type "N" if you are running this for the first time: ').strip().upper()
 
 if saved_configs == 'Y': 
@@ -120,6 +121,48 @@ if saved_configs == "N":
     print("-" * 20)
     print("Configurations for Script")
     print("-" * 20)
+
+
+'''
+Download model
+
+'''
+######## download the model ##########
+import requests
+
+# We will save the model in the same folder as the script
+best_model_path = 'checkpoint_best_total.pth'
+
+# REPLACE THIS LINK with your actual Zenodo download link!
+zenodo_url = "https://zenodo.org/records/YOUR_RECORD_ID/files/checkpoint_best_total.pth?download=1"
+
+# Check if the file already exists
+if not os.path.exists(best_model_path):
+    print(f"\nModel weights not found. Downloading from Zenodo (134 MB)...")
+    
+    # Stream the download so we can show a progress bar
+    response = requests.get(zenodo_url, stream=True)
+    total_size = int(response.headers.get('content-length', 0))
+    
+    with open(best_model_path, 'wb') as file, tqdm.tqdm(
+        desc="Downloading Model",
+        total=total_size,
+        unit='iB',
+        unit_scale=True,
+        unit_divisor=1024,
+    ) as progress_bar:
+        for data in response.iter_content(chunk_size=1024):
+            size = file.write(data)
+            progress_bar.update(size)
+            
+    print("Download complete!\n")
+else:
+    print(f"\nFound local model weights at: {best_model_path}")
+
+# Create the nested directory structure automatically
+os.makedirs(csv_dir, exist_ok=True)
+os.makedirs(viz_dir, exist_ok=True)
+
 
 
 #############

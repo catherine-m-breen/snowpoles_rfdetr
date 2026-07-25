@@ -6,3 +6,7 @@ test_inspection.ipynb
 WSCT1025.JPG 
 WSCT0785.JPG 
 checkpoint_best_total.pth
+.gradio
+app.py
+command_prompts
+outputs
