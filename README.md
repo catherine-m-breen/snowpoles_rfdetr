@@ -95,10 +95,14 @@ The script saves an annotated thumbnail for every 20th image. You can flip throu
 
 Possible Errors: 
 
+- "conda: command not found." 
+You need to install Miniconda/Anaconda, or you need to restart VSCode after installing it.
 - WARNING: No images found in [path]!</b></summary> <blockquote>
 Ensure your file path is exactly correct, contains no typos, and is <b>not</b> wrapped in extra quotes or leading spaces when pasted into the terminal.</blockquote> </details> <details> <summary><b>
 - TypeError: ufunc 'divide' not supported...</b></summary> <blockquote>Ensure you are entering a numeric value (like <code>304.8</code>) when asked for the pole length. If you accidentally type text (like "2016-2017"), the math calculations will fail!</blockquote> </details> <details> <summary><b> 
 - Error: Model not found at [path]</b></summary> <blockquote>Check that your <code>checkpoint_best_total.pth</code> file actually exists at the exact path defined in the <code>best_model_path</code> variable inside the script.</blockquote> </details>
+- NameError: name 'ref_img_path' is not defined </b></summary> <blockquote> This error happens when the script cannot find your images to set the reference image, usually because the folder path you entered has a hidden mistake. Double-check that there are no leading spaces when you paste the image directory path into the terminal.</blockquote> </details> 
+
 
 
 
