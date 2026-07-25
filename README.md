@@ -5,7 +5,7 @@
 
 This script processes a time series of trail camera images to automatically detect snow poles and estimate the depth of the snow. Instead of manually clicking through hundreds of images, this tool uses a fine-tuned RF-DETR (Robust Feature Detection Transformer) model to identify the visible portion of the snow pole, calculates the snow depth based on a physical conversion factor, and exports the data straight to a csv. 
 
-## Note: It helps if you know: height of pole (in cm), location, and camera ID! 
+##### Note: It helps if you know: height of pole (in cm), location, and camera ID! 
 
 ## Some Key Features
 <p>- Automated calibration: Click the top and bottom of a snow-free image to automatically calculate the pixel-to-centimeter scale.</p> 
@@ -92,7 +92,13 @@ When the script finishes processing your images, check your output folders for t
 The script saves an annotated thumbnail for every 20th image. You can flip through these to make sure the AI accurately placed a bounding box around the pole!
 
 ##  Troubleshooting
-<details> <summary><b>🔴 WARNING: No images found in [path]!</b></summary> <blockquote>Ensure your file path is exactly correct, contains no typos, and is <b>not</b> wrapped in extra quotes or leading spaces when pasted into the terminal.</blockquote> </details> <details> <summary><b>🔴 TypeError: ufunc 'divide' not supported...</b></summary> <blockquote>Ensure you are entering a numeric value (like <code>304.8</code>) when asked for the pole length. If you accidentally type text (like "2016-2017"), the math calculations will fail!</blockquote> </details> <details> <summary><b>🔴 Error: Model not found at [path]</b></summary> <blockquote>Check that your <code>checkpoint_best_total.pth</code> file actually exists at the exact path defined in the <code>best_model_path</code> variable inside the script.</blockquote> </details>
+
+Possible Errors: 
+
+- WARNING: No images found in [path]!</b></summary> <blockquote>
+Ensure your file path is exactly correct, contains no typos, and is <b>not</b> wrapped in extra quotes or leading spaces when pasted into the terminal.</blockquote> </details> <details> <summary><b>
+- TypeError: ufunc 'divide' not supported...</b></summary> <blockquote>Ensure you are entering a numeric value (like <code>304.8</code>) when asked for the pole length. If you accidentally type text (like "2016-2017"), the math calculations will fail!</blockquote> </details> <details> <summary><b> 
+- Error: Model not found at [path]</b></summary> <blockquote>Check that your <code>checkpoint_best_total.pth</code> file actually exists at the exact path defined in the <code>best_model_path</code> variable inside the script.</blockquote> </details>
 
 
 
