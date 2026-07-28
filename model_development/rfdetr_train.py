@@ -29,6 +29,7 @@ from PIL import Image
 # plot the train adn val loss and save
 # save the model checkpoint 
 
+import torch
 import os
 import cv2
 import glob
