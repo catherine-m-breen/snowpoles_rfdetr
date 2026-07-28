@@ -5,7 +5,7 @@ This is a backup copy for what is running on slurm
 
 import numpy as np
 import supervision as sv
-
+import torch
 from PIL import Image
 
 #from rfdetr import RFDETRMedium, RFDETRSegSmall, RFDETRSegMedium, RFDETRKeypointPreview, RFDETRSegLarge
@@ -42,7 +42,7 @@ from rfdetr import RFDETRSegMedium, RFDETRSegNano, RFDETRSegSmall
 dataset = '/discover/nobackup/cmbreen/rfdetr_snow/dataset_rfd_detr'
 model_path = '/discover/nobackup/cmbreen/rfdetr_snow/rf-detr-seg-medium.pt'
 outputs = '/discover/nobackup/cmbreen/rfdetr_snow/outputs'
-exp_name = 'SegNano_bs16_5percent_e10' # Updated to bs16 based on 448 res
+exp_name = 'SegNano_bs16_10percent_e10' # Updated to bs16 based on 448 res
 
 os.makedirs(outputs, exist_ok=True)
 
@@ -72,7 +72,7 @@ else:
         name=exp_name,          
         workers=16,             
         device='cuda',        
-        fraction=0.05
+        fraction=0.1 ## increasing to 10%
     )
     # rfdetr quirk: it ignores 'name' and creates an 'output' folder. Let's rename it automatically.
     bad_output_dir = os.path.join(outputs, 'output')
