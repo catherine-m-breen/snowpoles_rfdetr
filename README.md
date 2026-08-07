@@ -19,8 +19,8 @@ This script processes a time series of timelapse camera images to automatically 
     <img src="https://github.com/catherine-m-breen/snowpoles_rfdetr/blob/main/sample_images/map.png" alt="Snowpoles Global Network Map" width="100%">
   </a>
 </p>
-- Submit at this link: https://docs.google.com/forms/d/e/1FAIpQLSdJuUmehywTtG8BR8QORQEzU9uZ976oMd6cOYOX-glyis1zmg/viewform?pli=1 
-- Reach out to Catherine Breen, catherine.m.breen@nasa.gov with any questions.
+<p>- Submit at this link: https://docs.google.com/forms/d/e/1FAIpQLSdJuUmehywTtG8BR8QORQEzU9uZ976oMd6cOYOX-glyis1zmg/viewform?pli=1 
+<p>- Reach out to Catherine Breen, catherine.m.breen@nasa.gov with any questions.
 
 ## Some Key Features
 <p>- Automated calibration: Click the top and bottom of a snow-free image to automatically calculate the pixel-to-centimeter scale.</p> 
