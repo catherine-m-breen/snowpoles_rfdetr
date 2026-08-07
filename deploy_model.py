@@ -290,7 +290,7 @@ if os.path.exists(best_model_path):
         detections = model.predict(image)
         
         # Loop through all detected objects in this image
-        for j, xyxy in enumerate(detections.xyxy):
+        for j, xyxy, mask in enumerate((detections.xyxy), enumerate(detections.mask)):
             x_min, y_min, x_max, y_max = xyxy
             # Calculate vertical and horizontal differences
             dy = y_max - y_min
@@ -304,6 +304,25 @@ if os.path.exists(best_model_path):
 
             visible_length_cm = pole_length_px * conversion_factor
             snow_depth_cm = total_pole_cm - visible_length_cm
+
+            ####################
+              # Get the row (y) and column (x) coordinates of all pixels that make up the pole
+            y_indices, x_indices = np.where(mask)
+            if len(y_indices) == 0:
+                continue
+            top_idx = np.argmin(y_indices)
+            x_top, y_top = x_indices[top_idx], y_indices[top_idx]
+            bottom_idx = np.argmax(y_indices)
+            x_bottom, y_bottom = x_indices[bottom_idx], y_indices[bottom_idx]
+            dx = x_bottom - x_top
+            dy = y_bottom - y_top
+            pole_length_px = math.hypot(dx, dy)
+            visible_length_cm = pole_length_px * conversion_factor
+            snow_depth_cm_mask = total_pole_cm - visible_length_cm
+
+            ####################
+
+
             # results_data.append({
             #     'camera_id': camera_name,
             #     'season': , 
@@ -324,6 +343,7 @@ if os.path.exists(best_model_path):
                 'pole_length': total_pole_cm_input,
                 'filename': base_name,
                 'snowdepth': snow_depth_cm,
+                'snowdepth_mask': snow_depth_cm_mask,
                 'pixellength': pole_length_px,
                 'conversion': pixel_centimeter_conversion,
                 'notes': other_info
