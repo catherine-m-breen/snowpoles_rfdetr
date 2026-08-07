@@ -1,0 +1,10 @@
+name: base
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  - conda
+  - mamba[version='>=2.1.1']
+  - pip
+  - gdal
+prefix: /Users/cmbreen/miniforge3
