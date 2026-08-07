@@ -294,6 +294,8 @@ if os.path.exists(best_model_path):
             # Append data to list for dataframe
             results_data.append({
                 'camera_id': camera_name,
+                'Season': , 
+                'Location':, 
                 'filename': base_name,
                 'snowdepth': snow_depth_cm,
                 'pixellength': pole_length_px,
