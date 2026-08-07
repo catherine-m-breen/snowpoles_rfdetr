@@ -18,38 +18,37 @@ This script processes a time series of trail camera images to automatically dete
 
 
 ## Prerequisites & Installation 
+ 
 
 ### Step 1: Initial Setup
-1. **Download VSCode:** If you are new to Windows and Python, please see our tutorial. If you have done this before, skip to step 2. 
-2. **Create a Workspace:** In VSCode, create a new folder that will be your code folder. Call it `snowpoles_code`.
-3. **Download Files:** Download the following files from this repository and place them into your `snowpoles_code` folder: 
-    * `requirements.txt` (this tells Python which packages to download)
-    * `deploy_model.py` (the actual code)
-4. **Open Terminal:** Now we will load the packages from the "terminal" of VSCode. Look at the top menu, click **Terminal -> New Terminal**. A window will open at the bottom of your screen. 
+1. **Download Softwares:** You will need the following softwares to use this tool. Follow along the documents for each to get started. If you have the softwares you can skip to step 2. 
+    - VSCode: https://code.visualstudio.com/download?_exp_download=d53503e735 
+    - Git: https://git-scm.com/book/en/v2/Getting-Started-Installing-Git 
+    - Miniconda: 
+        - Windows: https://www.anaconda.com/docs/getting-started/miniconda/install/windows-gui-install
+        - Mac: https://www.anaconda.com/docs/getting-started/miniconda/install/mac-gui-install 
+2. **Create a Workspace:** If you have not already, download VSCode from the link in Step 1. Now, in VSCode, create a new folder that will be your code folder. Call it `snowpoles_code`.
+3. **Open Terminal:** Now we will load the packages from the "terminal" of VSCode. Look at the top menu, click **Terminal -> New Terminal**. A window will open at the bottom of your screen. 
     * *Note for Windows users:* Make sure your terminal is set to "Command Prompt", not "PowerShell".
+4. **Download Files:** Download the following files from this repository and place them into your `snowpoles_code` folder: 
+    * `environment.yml` (this tells Python which packages to download)
+    * `deploy_model.py` (the actual code)
+    
+    You can download the files two ways. Either by 1. downloading from the green button in the top corner of this github repository or doing a 'git clone.' We recommend a git clone as this is more coding friendly and will allow you to pull any updates to the model that come through. Run the followng commands:
+
+    ```
+    git clone https://github.com/catherine-m-breen/snowpoles_rfdetr.git
+    cd snowpoles_rfdetr
+    ```
 5. **Download Conda:** If you don't have Conda installed, please download and install [Miniconda](https://docs.anaconda.com/free/miniconda/index.html) for your specific operating system (Mac or Windows).
 
 ### Step 2: Creating the Environment
 An "environment" is like an isolated sandbox where we put all the specific tools this code needs, without messing up the rest of your computer.
 
 In your VSCode terminal, run this command to create a new Conda environment named `rfdetr_snow` using Python 3.9:
-```
-conda create -n rfdetr_snow python=3.9 -y
-```
-
-### Step 3: Activating and Installing Packages
-Once Conda finishes creating the environment, you need to "turn it on" (activate it). Run:
 
 ```
-conda activate rfdetr_snow
-```
-
-(You should now see (rfdetr_snow) at the start of your terminal line).
-
-Now, tell Python to install all the tools listed in the requirements file by running:
-
-```
-pip install -r requirements.txt
+conda env create -f environment.yml
 ```
 
 What is being installed?
@@ -62,6 +61,16 @@ The requirements.txt file automatically handles installing these dependencies fo
 - supervision
 - tqdm
 - rfdetr (Ensure this custom module is accessible in your Python folder if not included in pip)
+
+
+### Step 3: Activating and Installing Packages
+Once Conda finishes creating the environment, you need to "turn it on" (activate it). Run:
+
+```
+conda activate rfdetr_snow
+```
+
+(You should now see (rfdetr_snow) at the start of your terminal line).
 
 
 ### Step 4: Running the model 
