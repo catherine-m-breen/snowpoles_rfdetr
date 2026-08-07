@@ -1,6 +1,6 @@
 <div align="center"> <h1>Snowpole Snow Depth Estimation Tool </h1> 
 
-<p><i>Automated snow depth extraction from trail cameras using Roboflow's RFDETR</i></p> 
+<p><i>Automated snow depth extraction from timelapse cameras using Roboflow's RFDETR</i></p> 
 </div> <hr>
 
 This script processes a time series of timelapse camera images to automatically detect snow poles and estimate the depth of the snow. Instead of clicking through images, this tool uses a fine-tuned version of the RF-DETR (Robust Feature Detection Transformer) model to identify the visible portion of the snow pole, calculate the snow depth based on a pixel-to-centimeter converesion factor, and then export the data to a csv. 
