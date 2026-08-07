@@ -3,7 +3,7 @@
 <p><i>Automated snow depth extraction from trail cameras using Roboflow's RFDETR</i></p> 
 </div> <hr>
 
-This script processes a time series of timelapse camera images to automatically detect snow poles and estimate the depth of the snow. Instead of manually clicking through hundreds of images, this tool uses a fine-tuned RF-DETR (Robust Feature Detection Transformer) model to identify the visible portion of the snow pole, calculate the snow depth based on a physical conversion factor, and then export the data to a csv. 
+This script processes a time series of timelapse camera images to automatically detect snow poles and estimate the depth of the snow. Instead of clicking through images, this tool uses a fine-tuned version of the RF-DETR (Robust Feature Detection Transformer) model to identify the visible portion of the snow pole, calculate the snow depth based on a pixel-to-centimeter converesion factor, and then export the data to a csv. 
 
 
 <img src="https://github.com/catherine-m-breen/snowpoles_rfdetr/blob/main/sample_images/pred_5_TLS-A1N_WSCT1734.JPG"> 
@@ -21,7 +21,7 @@ This script processes a time series of timelapse camera images to automatically 
  
 
 ### Step 1: Initial Setup
-1. **Download Softwares:** You will need the following softwares to use this tool. Use the documents below for each software to download. If you already have the softwares you can skip to step 2. 
+1. **Download Softwares:** You will need the following softwares to use this tool. Use the documents below for each software to download. If you already have the softwares you can skip to step 1.2. 
     - VSCode: https://code.visualstudio.com/download?_exp_download=d53503e735 
     - Git: https://git-scm.com/book/en/v2/Getting-Started-Installing-Git 
     - Miniconda: 
