@@ -11,11 +11,16 @@ This script processes a time series of timelapse camera images to automatically 
 
 ##### Note: It helps if you know: height of pole (in cm), location, and camera ID! 
 
+## Do you have dataset you'd like to submit? 
+
+We are trying to collect and consolidate the global network of snowpoles! See the map here: https://catherine-m-breen.github.io/snowpolesmap 
+Submit at this link: https://docs.google.com/forms/d/e/1FAIpQLSdJuUmehywTtG8BR8QORQEzU9uZ976oMd6cOYOX-glyis1zmg/viewform?pli=1 
+- Reach out to Catherine Breen, catherine.m.breen@nasa.gov with any questions.
+
 ## Some Key Features
 <p>- Automated calibration: Click the top and bottom of a snow-free image to automatically calculate the pixel-to-centimeter scale.</p> 
 <p>- Snow Depth csv: Outputs a clean Pandas dataframe (.csv) with snow depth in centimeters.</p> 
 <p>- Example photos: Automatically saves bounding box visualizations for a subset of images so you can verify the model is working correctly.</p> 
-
 
 ## Prerequisites & Installation 
  
