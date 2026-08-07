@@ -226,7 +226,7 @@ if pixel_centimeter_conversion == 'NA':
 
 ######## download the model ##########
 
-best_model_path = '/Users/cmbreen/code/snowpoles_rfdetr/checkpoint_best_total.pth'
+best_model_path = './checkpoint_best_total.pth'
 
 # Create the nested directory structure automatically
 os.makedirs(csv_dir, exist_ok=True)

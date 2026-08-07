@@ -9,3 +9,4 @@ checkpoint_best_total.pth
 .gradio
 command_prompts
 outputs
+requirements.txt

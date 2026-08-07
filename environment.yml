@@ -1,10 +1,40 @@
-name: base
+name: rfdetr_snow
+
 channels:
   - conda-forge
+
 dependencies:
-  - python=3.12
-  - conda
-  - mamba[version='>=2.1.1']
+  - python=3.14
+  - accelerate=1.14.0
+  - ipykernel=7.3.0
+  - matplotlib=3.11.0
+  - numpy=2.5.0
+  - opencv=5.0.0
+  - pandas=3.0.3
+  - pillow=12.2.0
+  - peft=0.19.1
+  - pytorch=2.12.1
+  - torchvision=0.27.1
+  - scipy=1.18.0
+  - supervision=0.29.0.post0
+  - tqdm=4.68.3
+  - transformers=5.12.1
+  - pyyaml=6.0.3
   - pip
-  - gdal
-prefix: /Users/cmbreen/miniforge3
+
+  - pip:
+      - audioop-lts==0.2.2
+      - fastapi==0.139.2
+      - gradio==6.20.0
+      - gradio-client==2.5.0
+      - groovy==0.1.2
+      - hf-gradio==0.4.1
+      - orjson==3.11.9
+      - pydub==0.25.1
+      - python-multipart==0.0.32
+      - pytz==2026.2
+      - rfdetr==1.8.3
+      - safehttpx==0.1.7
+      - semantic-version==2.10.0
+      - tomlkit==0.14.0
+      - uvicorn==0.51.0
