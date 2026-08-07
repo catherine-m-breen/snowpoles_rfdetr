@@ -292,24 +292,41 @@ if os.path.exists(best_model_path):
         # Loop through all detected objects in this image
         for j, xyxy in enumerate(detections.xyxy):
             x_min, y_min, x_max, y_max = xyxy
-            pole_length_px = y_max - y_min
-            
-            # Apply conversion factor to get visible length in cm
+            # Calculate vertical and horizontal differences
+            dy = y_max - y_min
+            dx = x_max - x_min
+            # If the pole is tilted (bounding box is wider than 10 pixels)
+            # use the hypotenuse 
+            if dx > 10:
+                pole_length_px = math.hypot(dx, dy) 
+            else:
+                pole_length_px = dy
+
             visible_length_cm = pole_length_px * conversion_factor
-            
-            # Snow depth is total height minus what is currently visible
             snow_depth_cm = total_pole_cm - visible_length_cm
-            
-            # Append data to list for dataframe
+            # results_data.append({
+            #     'camera_id': camera_name,
+            #     'season': , 
+            #     'location':, 
+            #     'image_directory':, 
+            #     'pole_length'
+            #     'filename': base_name,
+            #     'snowdepth': snow_depth_cm,
+            #     'pixellength': pole_length_px,
+            #     'conversion': conversion_factor
+            #     'notes':
+            # })
             results_data.append({
                 'camera_id': camera_name,
-                'season': , 
-                'location':, 
+                'season': camera_season, 
+                'location': location_information, 
+                'image_directory': str(camera_image_path), 
+                'pole_length': total_pole_cm_input,
                 'filename': base_name,
                 'snowdepth': snow_depth_cm,
                 'pixellength': pole_length_px,
-                'conversion': conversion_factor
-                'notes':
+                'conversion': pixel_centimeter_conversion,
+                'notes': other_info
             })
         
         # Annotate
