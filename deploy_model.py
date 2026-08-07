@@ -359,6 +359,21 @@ if os.path.exists(best_model_path):
             annotated_image = image.copy()
             annotated_image = color_annotator.annotate(scene=annotated_image, detections=detections)
             annotated_image = polygon_annotator.annotate(scene=annotated_image, detections=detections)
+
+            #######
+            if detections.mask is not None:
+                for mask in detections.mask:
+                    y_indices, x_indices = np.where(mask)
+                    if len(y_indices) > 0:
+                        top_idx = np.argmin(y_indices)
+                        bottom_idx = np.argmax(y_indices)          
+                        x_top, y_top = int(x_indices[top_idx]), int(y_indices[top_idx])
+                        x_bottom, y_bottom = int(x_indices[bottom_idx]), int(y_indices[bottom_idx])
+                        cv2.line(annotated_image, (x_top, y_top), (x_bottom, y_bottom), (0, 0, 255), thickness + 1)
+                        # # Draw little yellow dots at the exact top and bottom points for visual proof
+                        # cv2.circle(annotated_image, (x_top, y_top), thickness + 2, (0, 255, 255), -1) 
+                        # cv2.circle(annotated_image, (x_bottom, y_bottom), thickness + 2, (0, 255, 255), -1)
+            ######
             
             # Convert OpenCV BGR image to PIL RGB Image for thumbnailing/saving
             annotated_image_rgb = cv2.cvtColor(annotated_image, cv2.COLOR_BGR2RGB)
