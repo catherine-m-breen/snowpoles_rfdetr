@@ -13,8 +13,8 @@ This script processes a time series of timelapse camera images to automatically 
 
 ## Do you have dataset you'd like to submit? 
 
-We are trying to collect and consolidate the global network of snowpoles! See the map here: https://catherine-m-breen.github.io/snowpolesmap 
-Submit at this link: https://docs.google.com/forms/d/e/1FAIpQLSdJuUmehywTtG8BR8QORQEzU9uZ976oMd6cOYOX-glyis1zmg/viewform?pli=1 
+- We are trying to collect and consolidate the global network of snowpoles! See the map here: https://catherine-m-breen.github.io/snowpolesmap 
+- Submit at this link: https://docs.google.com/forms/d/e/1FAIpQLSdJuUmehywTtG8BR8QORQEzU9uZ976oMd6cOYOX-glyis1zmg/viewform?pli=1 
 - Reach out to Catherine Breen, catherine.m.breen@nasa.gov with any questions.
 
 ## Some Key Features
