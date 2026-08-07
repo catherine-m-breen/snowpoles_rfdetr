@@ -3,7 +3,7 @@
 <p><i>Automated snow depth extraction from trail cameras using Roboflow's RFDETR</i></p> 
 </div> <hr>
 
-This script processes a time series of trail camera images to automatically detect snow poles and estimate the depth of the snow. Instead of manually clicking through hundreds of images, this tool uses a fine-tuned RF-DETR (Robust Feature Detection Transformer) model to identify the visible portion of the snow pole, calculates the snow depth based on a physical conversion factor, and exports the data straight to a csv. 
+This script processes a time series of timelapse camera images to automatically detect snow poles and estimate the depth of the snow. Instead of manually clicking through hundreds of images, this tool uses a fine-tuned RF-DETR (Robust Feature Detection Transformer) model to identify the visible portion of the snow pole, calculate the snow depth based on a physical conversion factor, and then export the data to a csv. 
 
 
 <img src="https://github.com/catherine-m-breen/snowpoles_rfdetr/blob/main/sample_images/pred_5_TLS-A1N_WSCT1734.JPG"> 
@@ -21,7 +21,7 @@ This script processes a time series of trail camera images to automatically dete
  
 
 ### Step 1: Initial Setup
-1. **Download Softwares:** You will need the following softwares to use this tool. Follow along the documents for each to get started. If you have the softwares you can skip to step 2. 
+1. **Download Softwares:** You will need the following softwares to use this tool. Use the documents below for each software to download. If you already have the softwares you can skip to step 2. 
     - VSCode: https://code.visualstudio.com/download?_exp_download=d53503e735 
     - Git: https://git-scm.com/book/en/v2/Getting-Started-Installing-Git 
     - Miniconda: 
@@ -29,7 +29,11 @@ This script processes a time series of trail camera images to automatically dete
         - Mac: https://www.anaconda.com/docs/getting-started/miniconda/install/mac-gui-install 
 2. **Create a Workspace:** If you have not already, download VSCode from the link in Step 1. Now, in VSCode, create a new folder that will be your code folder. Call it `snowpoles_code`.
 3. **Open Terminal:** Now we will load the packages from the "terminal" of VSCode. Look at the top menu, click **Terminal -> New Terminal**. A window will open at the bottom of your screen. 
-    * *Note for Windows users:* Make sure your terminal is set to "Command Prompt", not "PowerShell".
+    - For Mac users: Command + J will also open a terminal window at the bottom of the screen. 
+    - For Window users: Ctrl + J (or Ctrl + ` ) will also quickly open the terminal. Important: Your terminal might default to "PowerShell", but we need it to be "Command Prompt". To change this, look at the top right of the terminal window, click the downward arrow next to the + icon, and select Command Prompt.
+
+    * *Note for Windows users:* Make sure your terminal is set to "Command Prompt", not "PowerShell". You will know you are in PowerShell by the word "PowerShell" at the top left corner of your terminal window. 
+
 4. **Download Files:** Download the code folder from this repository and place them into your `snowpoles_code` folder: 
 
     You can download the files two ways. Either by 1. downloading from the green button in the top corner of this github repository or doing a 'git clone.' We recommend a git clone as this is more coding friendly and will allow you to pull any updates to the model that come through. Run the followng commands:
@@ -43,10 +47,10 @@ This script processes a time series of trail camera images to automatically dete
     * `environment.yml` (this tells Python which packages to download)
     * `deploy_model.py` (the actual code)
     
-5. **Download Conda:** If you don't have Conda installed, please download and install [Miniconda](https://docs.anaconda.com/free/miniconda/index.html) for your specific operating system (Mac or Windows).
+5. **Download Conda:** If you don't have Conda installed, please download and install [Miniconda](https://docs.anaconda.com/free/miniconda/index.html) for your specific operating system (Mac or Windows). See Step 1.1.
 
 ### Step 2: Creating the Environment
-An "environment" is like an isolated sandbox where we put all the specific tools this code needs, without messing up the rest of your computer.
+An "environment" is like an isolated sandbox where we put all the specific tools this code needs, without messing up the rest of your computer or other coding environments that might have different package requirements. Ideally for projects, each has their own "coding sandbox" or basically conda environemnt. 
 
 In your VSCode terminal, run this command to create a new Conda environment named `rfdetr_snow` using Python 3.14:
 
@@ -68,7 +72,7 @@ The environment.yml file automatically handles installing these dependencies for
 - rfdetr (Ensure this custom module is accessible in your Python folder if not included in pip)
 
 
-### Step 3: Activating and Installing Packages
+### Part 3: Activating and Installing Packages
 Once Conda finishes creating the environment, you need to "turn it on" (activate it). Run:
 
 ```
@@ -91,7 +95,9 @@ If you type <kbd>N</kbd> (First Time / Interactive Mode), you will be prompted t
 
 - Camera ID: Name of the site (e.g., TLS-A1N).
 - Water Year: The season the photos were taken (e.g., 2016-2017).
-- Image Directory Path: The full path to the folder containing your raw images.
+- Image Directory Path: The full path to the folder containing your raw images. This is likely the hardest part as the path name needs to be exactly right for the computer to know where to find it. 
+    - For Mac: Navigate to the folder on your computer and on the folder name, right click while holding down the 'Option' key. You'll see an option about halfway down called "Copy [Camera Folder] as Pathname." The Pathname is now copied to your folder in the correct format. 
+    - For Windows: Navigate to the folder on your computer and hold down the 'Shift' key while right-clicking the folder. Select "Copy as path" from the menu. (Alternatively, you can open the folder, click on the address bar at the top of the File Explorer window so the path highlights in blue, and press Ctrl+C to copy it).
 - Total Pole Length (cm): The actual length of the full bare pole in centimeters (e.g., 304.8).
 - Pixel-to-Centimeter Conversion: Type <kbd>NA</kbd> to have the script calculate this automatically.
 - Reference Image: Indicate if the 1st image in the folder is bare ground (snow-free). If not, provide the image number (e.g., 9).
