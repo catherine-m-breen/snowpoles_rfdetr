@@ -125,8 +125,17 @@ if saved_configs == "N":
     
     print("-" * 20)
     print("Configurations for Script")
+    print(f"Camera ID:                   {camera_name}")
+    print(f"Water Year:                  {camera_season}")
+    print(f"Image Directory:             {camera_image_path}")
+    print(f"Total Pole Length (cm):      {total_pole_cm_input}")
+    print(f"Pixel/cm Conversion:         {pixel_centimeter_conversion}")
+    print(f"Reference Image Number:      {ref_img_path_actual}")
+    print(f"Location Info:               {location_information}")
+    print(f"Other Info/Notes:            {other_info}")
+    print(f"Base Output Directory:       {base_output_dir}")
+    print(f"Camera Output Directory:     {camera_out_dir}")
     print("-" * 20)
-
 
 '''
 Download model
@@ -294,12 +303,13 @@ if os.path.exists(best_model_path):
             # Append data to list for dataframe
             results_data.append({
                 'camera_id': camera_name,
-                'Season': , 
-                'Location':, 
+                'season': , 
+                'location':, 
                 'filename': base_name,
                 'snowdepth': snow_depth_cm,
                 'pixellength': pole_length_px,
                 'conversion': conversion_factor
+                'notes':
             })
         
         # Annotate

@@ -126,7 +126,7 @@ When the script finishes processing your images, check your output folders for t
 - Columns include: camera_id, filename, snowdepth, pixellength, and the conversion factor.
 -  Visualizations (pred_*.jpg)
 
-The script saves an annotated thumbnail for every 20th image. You can flip through these to make sure the AI accurately placed a bounding box around the pole!
+The script saves an annotated thumbnail for every 20th image. You can flip through these to make sure the model accurately placed a bounding box around the pole. There will likely be some buffer around the poles due to labeling framework (we converted keypoints to segmented masks)
 
 ##  Troubleshooting
 
