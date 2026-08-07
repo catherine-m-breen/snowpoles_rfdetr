@@ -388,7 +388,7 @@ if os.path.exists(best_model_path):
                         bottom_idx = np.argmax(y_indices)          
                         x_top, y_top = int(x_indices[top_idx]), int(y_indices[top_idx])
                         x_bottom, y_bottom = int(x_indices[bottom_idx]), int(y_indices[bottom_idx])
-                        cv2.line(annotated_image, (x_top, y_top), (x_bottom, y_bottom), (0, 0, 255), thickness + 1)
+                        cv2.line(annotated_image, (x_top, y_top), (x_bottom, y_bottom), (98, 0, 255), thickness + 1)
                         # # Draw little yellow dots at the exact top and bottom points for visual proof
                         # cv2.circle(annotated_image, (x_top, y_top), thickness + 2, (0, 255, 255), -1) 
                         # cv2.circle(annotated_image, (x_bottom, y_bottom), thickness + 2, (0, 255, 255), -1)
