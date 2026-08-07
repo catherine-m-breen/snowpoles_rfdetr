@@ -45,14 +45,14 @@ This script processes a time series of trail camera images to automatically dete
 ### Step 2: Creating the Environment
 An "environment" is like an isolated sandbox where we put all the specific tools this code needs, without messing up the rest of your computer.
 
-In your VSCode terminal, run this command to create a new Conda environment named `rfdetr_snow` using Python 3.9:
+In your VSCode terminal, run this command to create a new Conda environment named `rfdetr_snow` using Python 3.14:
 
 ```
 conda env create -f environment.yml
 ```
 
 What is being installed?
-The requirements.txt file automatically handles installing these dependencies for you:
+The environment.yml file automatically handles installing these dependencies for you:
 
 - numpy and pandas
 - opencv-python (cv2)
