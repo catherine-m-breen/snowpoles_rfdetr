@@ -30,16 +30,19 @@ This script processes a time series of trail camera images to automatically dete
 2. **Create a Workspace:** If you have not already, download VSCode from the link in Step 1. Now, in VSCode, create a new folder that will be your code folder. Call it `snowpoles_code`.
 3. **Open Terminal:** Now we will load the packages from the "terminal" of VSCode. Look at the top menu, click **Terminal -> New Terminal**. A window will open at the bottom of your screen. 
     * *Note for Windows users:* Make sure your terminal is set to "Command Prompt", not "PowerShell".
-4. **Download Files:** Download the following files from this repository and place them into your `snowpoles_code` folder: 
-    * `environment.yml` (this tells Python which packages to download)
-    * `deploy_model.py` (the actual code)
-    
+4. **Download Files:** Download the code folder from this repository and place them into your `snowpoles_code` folder: 
+
     You can download the files two ways. Either by 1. downloading from the green button in the top corner of this github repository or doing a 'git clone.' We recommend a git clone as this is more coding friendly and will allow you to pull any updates to the model that come through. Run the followng commands:
 
     ```
     git clone https://github.com/catherine-m-breen/snowpoles_rfdetr.git
     cd snowpoles_rfdetr
     ```
+
+    On the left-hand side of your screen you will now see several files in your file "Explorer." The main ones we will be using are: 
+    * `environment.yml` (this tells Python which packages to download)
+    * `deploy_model.py` (the actual code)
+    
 5. **Download Conda:** If you don't have Conda installed, please download and install [Miniconda](https://docs.anaconda.com/free/miniconda/index.html) for your specific operating system (Mac or Windows).
 
 ### Step 2: Creating the Environment
@@ -50,6 +53,8 @@ In your VSCode terminal, run this command to create a new Conda environment name
 ```
 conda env create -f environment.yml
 ```
+
+Note: this will take several minutes to download (estimate: 3-4 minutes)
 
 What is being installed?
 The environment.yml file automatically handles installing these dependencies for you:
