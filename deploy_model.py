@@ -288,9 +288,10 @@ if os.path.exists(best_model_path):
         image = cv2.imread(img_path)
         
         detections = model.predict(image)
-        
-        # Loop through all detected objects in this image
-        for j, xyxy, mask in zip(enumerate(detections.xyxy), enumerate(detections.mask)):
+        # 1. Safety check: create a list of 'None' if masks are missing
+        masks = detections.mask if detections.mask is not None else [None] * len(detections.xyxy)
+        # 2. Correctly unpack the index (j) and the zipped items (xyxy, mask)
+        for j, (xyxy, mask) in enumerate(zip(detections.xyxy, masks)):
             x_min, y_min, x_max, y_max = xyxy
             # Calculate vertical and horizontal differences
             dy = y_max - y_min
