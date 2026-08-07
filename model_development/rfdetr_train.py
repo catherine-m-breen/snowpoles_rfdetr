@@ -91,6 +91,7 @@ else:
 
 if os.path.exists(best_model_path):
     print(f"Loading best weights for inference from: {best_model_path}")
+    print(best_model_path)
     model.load(best_model_path)
     
     # Grab 5 random images from the test set
@@ -124,3 +125,35 @@ if os.path.exists(best_model_path):
     print(f"Visualizations saved to: {viz_out_dir}")
 else:
     print("Could not find best.pt for visualization. Check training logs.")
+
+
+
+    import torch
+
+# 1. Load the checkpoint file into memory using PyTorch
+checkpoint = torch.load(best_model_path, map_location='cpu')
+
+# 2. Extract the actual weights (state_dict) from the file
+if 'model_state_dict' in checkpoint:
+    state_dict = checkpoint['model_state_dict']
+elif 'state_dict' in checkpoint:
+    state_dict = checkpoint['state_dict']
+elif 'model' in checkpoint:
+    state_dict = checkpoint['model']
+else:
+    state_dict = checkpoint 
+    
+# 3. Apply the weights to your model
+try:
+    model.load_state_dict(state_dict)
+    print("Weights loaded successfully using model.load_state_dict()!")
+except AttributeError:
+    # If the outer wrapper doesn't accept it, apply it to the internal model
+    model.model.load_state_dict(state_dict)
+    print("Weights loaded successfully using model.model.load_state_dict()!")
+
+# 4. Put the model in evaluation mode for predictions
+if hasattr(model, 'eval'):
+    model.eval()
+elif hasattr(model.model, 'eval'):
+    model.model.eval()
