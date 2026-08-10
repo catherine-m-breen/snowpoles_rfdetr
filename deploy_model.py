@@ -20,9 +20,11 @@ import tqdm
 import datetime
 from matplotlib.widgets import Button  # Added for the Reset button
 ## additional packages ## 
-import plotly.express as px ## need to do conda install
-import IPython
+#import plotly.express as px ## need to do conda install
+#import IPython
 import re
+import torch 
+import gc
 
 print("--- Snowpole Setup ---")
 '''
@@ -534,8 +536,8 @@ if os.path.exists(best_model_path):
                 formatted_datetime = dt_c.strftime("%m/%d/%Y %H:%M")
             except Exception:
                 formatted_datetime = "Unknown" 
-
-        detections = model.predict(image)
+        with torch.no_grad():
+            detections = model.predict(image)
         # 1. Safety check: create a list of 'None' if masks are missing
         masks = detections.mask if detections.mask is not None else [None] * len(detections.xyxy)
         # 2. Correctly unpack the index (j) and the zipped items (xyxy, mask)
@@ -649,9 +651,17 @@ if os.path.exists(best_model_path):
 
             pil_img.save(save_path)
 
-        ######## checkpoint every 10#####
+        ######## checkpoint every 10 and clear memory #####
         if (i + 1) % 10 == 0:
             pd.DataFrame(results_data).to_csv(csv_file_path, index=False)
+            ### dump any memory caches ##
+            gc.collect() 
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+        del image
+        del detections
+        if 'annotated_image' in locals():
+            del annotated_image
 
     df = pd.DataFrame(results_data)
     df.to_csv(csv_file_path, index=False)
