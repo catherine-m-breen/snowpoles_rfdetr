@@ -129,7 +129,6 @@ If you type <kbd>N</kbd> (First Time / Interactive Mode), you will be prompted t
 > The pixel-to-centimeter conversion is a way to convert the snow depth in pixels (how the computer is measuring snow depth) and centimeters (how we measure snow depth). The computer algorithm in this case is looking at the different lengths of the pole and figuring how many pixels makes up that length. We can't see pixels, but pixels are the tiny building blocks of an image. In order to know how deep the snow is in centimeter, we have to convert the value in pixels to centimeters. However, this conversion will depend on the image, and where each pole is in the image. For example, if the pole is close to the camera, there will be more pixels to represent a centimeter than if the pole is really far away from the camera in which case a centimeter will also be really small on the screen and there will be very few pixels in a centimeter. To figure out the pixel to centimeter conversion, we use a "calibration target," and basically use either the full pole (if we know the length) or a section of the pole that we know the length (like the 10 cm top). We figure out how many pixels that is, and then we divide it by the known length in centimeters to get the pixel to centimeter conversion. Then, when the model figures out the snow depth in pixels, we can multiply by that conversion factor to get the pixels in centimeters. To read more about this conversion see Breen et al. (2023).
 > 
 
-
 - Reference Image: Indicate if the 1st image in the folder is bare ground (snow-free). If not, provide the image number (e.g., 9). Sometimes the first couple images are from set-up. Typically these images should get cleaned out of your timelapse camera folder. However, if they are still in there enter the correct image that should be the reference image. The model will use that image as the reference for all images in the folder. 
 - Output Directories: Paths where your final .csv and visualization images will be saved. The default is to press <kbd>enter</kbd> . Doing so creates a default folder called 'outputs' in your workspace folder. 
 
@@ -167,9 +166,9 @@ Ensure your file path is exactly correct, contains no typos, and is <b>not</b> w
 - NameError: name 'ref_img_path' is not defined </b></summary> <blockquote> This error happens when the script cannot find your images to set the reference image, usually because the folder path you entered has a hidden mistake. Double-check that there are no leading spaces when you paste the image directory path into the terminal.</blockquote> </details> 
 
 
+##  References
 
-
-
+Breen, C. M., Currier, W. R., Vuyovich, C., Miao, Z., & Prugh, L. R. (2024). Snow Depth Extraction From Time‐Lapse Imagery Using a Keypoint Deep Learning Model. Water Resources Research, 60(7), e2023WR036682. https://doi.org/10.1029/2023WR036682
 
 
 
