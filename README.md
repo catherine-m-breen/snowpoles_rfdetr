@@ -129,6 +129,21 @@ If you type <kbd>N</kbd> (First Time / Interactive Mode), you will be prompted t
 > The pixel-to-centimeter conversion is a way to convert the snow depth in pixels (how the computer is measuring snow depth) to centimeters (how we measure snow depth). We can't see pixels, but pixels are the tiny building blocks of an image. When the model runs, it finds the snow depth in pixels, and in order to know how deep the snow is in centimeter, we have to convert the value in pixels to centimeters. However, this conversion will depend on the image, and where each pole is in the image. For example, if the pole is close to the camera, there will be more pixels to represent a centimeter than if the pole is really far away from the camera in which case a centimeter will also be really small on the screen and there will be very few pixels in a centimeter. To figure out the pixel to centimeter conversion, we use a "calibration target," and basically use either the full pole (if we know the length) or a section of the pole that we know the length (like the 10 cm top). We figure out how many pixels that is, and then we divide it by the known length in centimeters to get the pixel to centimeter conversion. Then, when the model figures out the snow depth in pixels, we can multiply by that conversion factor to get the pixels in centimeters. To read more about this conversion see Breen et al. (2024).
 > 
 
+<div style="background-color: #f4fafe; border: 2px solid #99cfff; border-radius: 12px; padding: 16px; margin: 16px 0; box-shadow: 0 4px 8px rgba(0,0,0,0.05); font-family: sans-serif;">
+  <h3 style="color: #2a73ad; margin-top: 0; font-size: 1.15em; display: flex; align-items: center; gap: 8px;">
+    ❄️📏 Um... can you please explain what the pixel-to-centimeter conversion is?!
+  </h3>
+  <p style="line-height: 1.6; color: #333; margin-bottom: 0;">
+    The pixel-to-centimeter conversion is a way to convert the snow depth in pixels (how the computer is measuring snow depth) to centimeters (how we measure snow depth). We can't see pixels, but pixels are the tiny building blocks of an image. When the model runs, it finds the snow depth in pixels, and in order to know how deep the snow is in centimeters, we have to convert the value in pixels to centimeters. 
+    <br><br>
+    However, this conversion will depend on the image, and where each pole is in the image. For example, if the pole is close to the camera, there will be more pixels to represent a centimeter than if the pole is really far away from the camera, in which case a centimeter will also be really small on the screen and there will be very few pixels in a centimeter. 
+    <br><br>
+    To figure out the pixel-to-centimeter conversion, we use a "calibration target," and basically use either the full pole (if we know the length) or a section of the pole that we know the length (like the 10 cm top). We figure out how many pixels that is, and then we divide it by the known length in centimeters to get the pixel-to-centimeter conversion. Then, when the model figures out the snow depth in pixels, we can multiply by that conversion factor to get the depth in centimeters. 
+    <br><br>
+    <em>To read more about this conversion, see Breen et al. (2024).</em>
+  </p>
+</div>
+
 - Reference Image: Indicate if the 1st image in the folder is bare ground (snow-free). If not, provide the image number (e.g., 9). Sometimes the first couple images are from set-up. Typically these images should get cleaned out of your timelapse camera folder. However, if they are still in there enter the correct image that should be the reference image. The model will use that image as the reference for all images in the folder. 
 - Output Directories: Paths where your final .csv and visualization images will be saved. The default is to press <kbd>enter</kbd> . Doing so creates a default folder called 'outputs' in your workspace folder. 
 
