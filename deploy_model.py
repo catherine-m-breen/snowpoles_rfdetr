@@ -482,7 +482,7 @@ if os.path.exists(best_model_path):
             })
         
         # Annotate
-        if i % 20 == 0: ## save every 20 for examples (fixed from "if i % 20:" which skips the 0th and multiples of 20)
+        if i % 40 == 0: ## save every 20 for examples (fixed from "if i % 20:" which skips the 0th and multiples of 20)
             h, w = image.shape[:2]
             thickness = sv.calculate_optimal_line_thickness(resolution_wh=(w, h))
             color_annotator = sv.ColorAnnotator(color=color)
