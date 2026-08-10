@@ -39,7 +39,7 @@ This script processes a time series of timelapse camera images to automatically 
         - Mac: https://www.anaconda.com/docs/getting-started/miniconda/install/mac-gui-install  
 
 > [!NOTE]  
-> **What is Git and why are we using it?** 🕰️  
+> **What is Git and why are we using it?** 
 > *A brief history:* Git was created in 2005 by Linus Torvalds (the same person who created the Linux operating system) because he needed a better way for thousands of developers to collaborate on code without overwriting each other's work. It is a "version control system" — essentially a time machine and "track changes" tool for code. Using Git in this case allows you to be able to incorporate changes without having to redownload the folder every time. You can run the command "git pull" and the code will automatically update with any changes.
 > 
 > *Why use it here?* Instead of downloading a static `.zip` file of this tool that might quickly become outdated, Git allows you to "clone" (download) a live connection to this repository. When we update the model or fix bugs in the future, you can simply ask Git to "pull" the latest updates to your computer with a single command, rather than having to manually redownload and replace files!
