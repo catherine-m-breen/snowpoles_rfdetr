@@ -93,7 +93,7 @@ if saved_configs == "N":
         
     # 3. Expand '~' if they used it (e.g., ~/Documents/...)
     camera_image_path = os.path.expanduser(raw_path)
-    total_pole_cm_input = input("What is the length of the full pole in centimeters? (Put NA if non-applicable): ")
+    total_pole_cm_input = input("What is the length of the full pole in centimeters? (Put NA if non-applicable) \n If you do not know the height of the full pole, you WILL need a calibration section that you do know the length of (e.g., 10cm top, etc.): ")
     if total_pole_cm_input != 'NA':
         total_pole_cm = float(total_pole_cm_input)
     else:
@@ -265,11 +265,28 @@ if os.path.exists(best_model_path):
     x_min_ref, y_min_ref, x_max_ref, y_max_ref = ref_detections.xyxy[0]
     bare_pole_px = y_max_ref - y_min_ref
     
-    # Conversion factor: cm per pixel
-    print(f'{total_pole_cm},{bare_pole_px}')
-    conversion_factor = total_pole_cm / bare_pole_px
+    # # Conversion factor: cm per pixel
+    # print(f'{total_pole_cm},{bare_pole_px}')
+    # conversion_factor = total_pole_cm / bare_pole_px
+    # print(f"-> Reference Pole length in pixels: {bare_pole_px:.2f} px")
+    # print(f"-> Calculated Conversion Factor: {conversion_factor:.4f} cm/px")
+    # print("-" * 20)
+
+    # --- IMPLEMENTING YOUR IDEA ---
+    # If the user didn't know the total pole length (entered NA), 
+    # calculate it using the 10cm click conversion factor!
+    if total_pole_cm is None:
+        print("Total pole length unknown. Calculating it using your calibration clicks...")
+        conversion_factor = pixel_centimeter_conversion
+        total_pole_cm = bare_pole_px * conversion_factor
+        print(f"-> Extrapolated Total Pole Length: {total_pole_cm:.2f} cm")
+    else:
+        # If they DID provide the total pole length, calculate the conversion factor from it
+        conversion_factor = total_pole_cm / bare_pole_px
+    
+    print(f'Total pole cm: {total_pole_cm:.2f}, Bare pole px: {bare_pole_px:.2f}')
     print(f"-> Reference Pole length in pixels: {bare_pole_px:.2f} px")
-    print(f"-> Calculated Conversion Factor: {conversion_factor:.4f} cm/px")
+    print(f"-> Active Conversion Factor: {conversion_factor:.4f} cm/px")
     print("-" * 20)
     
     # --- RUN PREDICTIONS ON SNOWY IMAGES ---
