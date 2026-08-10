@@ -22,6 +22,7 @@ from matplotlib.widgets import Button  # Added for the Reset button
 ## additional packages ## 
 import plotly.express as px ## need to do conda install
 import IPython
+import re
 
 print("--- Snowpole Setup ---")
 '''
@@ -301,10 +302,53 @@ if pixel_centimeter_conversion == 'NA':
     enable_scroll_zoom_and_pan(ax)
 
     
-    # ginput(2) waits for 2 clicks, timeout=0 means it waits forever
-    points = plt.ginput(2, timeout=0) 
-    plt.close()
+    # # ginput(2) waits for 2 clicks, timeout=0 means it waits forever
+    # points = plt.ginput(2, timeout=0) 
+    # plt.close()
     
+        # --- CUSTOM GINPUT REPLACEMENT ---
+    points = []
+    markers = [] # Stores the red dots so we can remove them if you undo
+
+    def on_click(event):
+        # 1. Ignore clicks that are NOT on the main image (e.g., ignore the Reset Button)
+        if event.inaxes != ax:
+            return
+            
+        # 2. Only register LEFT clicks (button 1). Right click (3) is for panning.
+        if event.button == 1:
+            points.append((event.xdata, event.ydata))
+            
+            # Draw a visual red dot where the user clicked
+            marker, = ax.plot(event.xdata, event.ydata, 'ro', markersize=6)
+            markers.append(marker)
+            fig.canvas.draw()
+            
+            # If we have 2 points, we are done!
+            if len(points) == 2:
+                plt.pause(0.2) # Give a tiny pause so they can see the second red dot
+                plt.close(fig)
+
+    def on_key(event):
+        # Handle 'r' to reset zoom
+        if event.key == 'r':
+            reset_view()
+            
+        # Handle 'backspace' to undo the last point
+        elif event.key == 'backspace' and len(points) > 0:
+            points.pop()          # Remove the coordinate
+            marker = markers.pop() # Remove the red dot
+            marker.remove()
+            fig.canvas.draw_idle()
+
+    # Connect our custom functions to the figure
+    fig.canvas.mpl_connect('button_press_event', on_click)
+    fig.canvas.mpl_connect('key_press_event', on_key)
+    
+    # Show the plot and block the script until the window is closed
+    plt.show() 
+    # --------------------------------- 
+
     if len(points) == 2:
         x1, y1 = points[0]
         x2, y2 = points[1]
@@ -402,7 +446,7 @@ if os.path.exists(best_model_path):
         try: 
             # 1. Try to get the EXIF creation time by looking for the syntax pattern
             with Image.open(img_path) as pil_img:
-                IPython.embed()
+                #IPython.embed()
                 exif_data = pil_img._getexif()
                 raw_time = None
                 
@@ -488,19 +532,6 @@ if os.path.exists(best_model_path):
                     flag = 1
             ####################
 
-
-            # results_data.append({
-            #     'camera_id': camera_name,
-            #     'season': , 
-            #     'location':, 
-            #     'image_directory':, 
-            #     'pole_length'
-            #     'filename': base_name,
-            #     'snowdepth': snow_depth_cm,
-            #     'pixellength': pole_length_px,
-            #     'conversion': conversion_factor
-            #     'notes':
-            # })
             results_data.append({
                 'camera_id': camera_name,
                 'season': camera_season, 
@@ -588,35 +619,6 @@ if os.path.exists(best_model_path):
     #     plt.tight_layout()
     #     plt.show()  # This will pause and display the pop-up plot to the user
 
-#     if not df.empty and 'snowdepth' in df.columns:
-#         print("\nGenerating Interactive Snow Depth summary plot...")
-        
-#         # Determine which columns to plot
-#         y_cols = ['snowdepth']
-#         if 'snowdepth_mask' in df.columns and not df['snowdepth_mask'].isna().all():
-#             y_cols.append('snowdepth_mask')
-            
-#         # Create interactive Plotly figure
-#         fig = px.line(df, 
-#                       x=df.index, 
-#                       y=y_cols, 
-#                       markers=True,
-#                       hover_data=['filename', 'datetime'], # Adds these to the hover tooltip!
-#                       title=f"Estimated Snow Depth over Time/Images - {camera_name}",
-#                       labels={
-#                           'index': 'Image Index', 
-#                           'value': 'Snow Depth (cm)', 
-#                           'variable': 'Calculation Method'
-#                       })
-        
-#         # Optionally, format the hover template to make it look cleaner
-#         fig.update_traces(hovertemplate="<b>%{customdata[0]}</b><br>Time: %{customdata[1]}<br>Depth: %{y:.2f} cm")
-        
-#         # Sets Y-axis minimum to 0
-#         fig.update_yaxes(rangemode="tozero")
-        
-#         # Opens the interactive plot in your default web browser
-#         fig.show() 
 
     if not df.empty and 'snowdepth' in df.columns:
             print("\nGenerating Interactive Snow Depth summary plot...")
