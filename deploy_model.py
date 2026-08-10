@@ -320,7 +320,7 @@ if pixel_centimeter_conversion == 'NA':
             points.append((event.xdata, event.ydata))
             
             # Draw a visual red dot where the user clicked
-            marker, = ax.plot(event.xdata, event.ydata, 'ro', markersize=6)
+            marker, = ax.plot(event.xdata, event.ydata, 'r+', markersize=6)
             markers.append(marker)
             fig.canvas.draw()
             
@@ -365,7 +365,7 @@ if pixel_centimeter_conversion == 'NA':
     else:
         print("Error: Did not get 2 points. You'll need to restart the script or hardcode the conversion.")
         pixel_centimeter_conversion = 1.0 # fallback to prevent crash
-
+    plt.close()
 ##############
 
 
@@ -619,106 +619,119 @@ if os.path.exists(best_model_path):
     #     plt.tight_layout()
     #     plt.show()  # This will pause and display the pop-up plot to the user
 
-
     if not df.empty and 'snowdepth' in df.columns:
-            print("\nGenerating Interactive Snow Depth summary plot...")
-            
-            # 1. Figure out if we should use datetime or index for the X-axis
-            # Convert the datetime strings into actual datetime objects for plotting
-            parsed_dt = pd.to_datetime(df['datetime'], errors='coerce')
-            
-            # If we have at least one valid datetime, use datetimes for the X-axis
-            use_datetime = not parsed_dt.isna().all()
-            x_data = parsed_dt if use_datetime else df.index
-            x_label = "Date / Time" if use_datetime else "Image Index"
+        print("\nGenerating Interactive Snow Depth summary plot...")
+        
+        # 1. Figure out if we should use datetime or index for the X-axis
+        # Convert the datetime strings into actual datetime objects for plotting
+        parsed_dt = pd.to_datetime(df['datetime'], errors='coerce')
+        
+        # If we have at least one valid datetime, use datetimes for the X-axis
+        use_datetime = not parsed_dt.isna().all()
+        x_data = parsed_dt if use_datetime else df.index
+        x_label = "Date / Time" if use_datetime else "Image Index"
 
-            # 2. Setup the plot
-            fig, ax = plt.subplots(figsize=(10, 6))
-            
-            # Plot Bounding Box based snow depth (note the comma after line_bbox)
-            line_bbox, = ax.plot(x_data, df['snowdepth'], marker='o', linestyle='-', color='b', label='Snow Depth (BBox)')
-            
-            # Plot Mask based snow depth if available
-            line_mask = None
-            if 'snowdepth_mask' in df.columns and not df['snowdepth_mask'].isna().all():
-                line_mask, = ax.plot(x_data, df['snowdepth_mask'], marker='x', linestyle='--', color='r', alpha=0.7, label='Snow Depth (Mask)')
+        # 2. Setup the plot
+        fig, ax = plt.subplots(figsize=(10, 6))
+        
+        # Plot Bounding Box based snow depth (note the comma after line_bbox)
+        line_bbox, = ax.plot(x_data, df['snowdepth'], marker='o', linestyle='-', color='b', label='Snow Depth (BBox)')
+        
+        # Plot Mask based snow depth if available
+        line_mask = None
+        if 'snowdepth_mask' in df.columns and not df['snowdepth_mask'].isna().all():
+            line_mask, = ax.plot(x_data, df['snowdepth_mask'], marker='x', linestyle='--', color='r', alpha=0.7, label='Snow Depth (Mask)')
                 
-            ax.set_title(f"Estimated Snow Depth over Time/Images - {camera_name}")
+            # Updated Title to include instructions
+        ax.set_title(f"Estimated Snow Depth over Time/Images - {camera_name}\n(Press 'Enter' to Save & Close)")
             
             # Format X-axis
-            ax.set_xlabel(x_label)
-            if use_datetime:
-                fig.autofmt_xdate() # Rotates the dates so they don't overlap
-                
-            # Format Y-axis
-            max_depth = df['snowdepth'].max()
-            if pd.notna(max_depth): 
-                ax.set_ylim(0, max_depth + 10) 
-            ax.set_ylabel("Snow Depth (cm)")
+        ax.set_xlabel(x_label)
+        if use_datetime:
+            fig.autofmt_xdate() # Rotates the dates so they don't overlap
             
-            ax.grid(True, linestyle='--', alpha=0.7)
-            ax.legend()
+        # Format Y-axis
+        max_depth = df['snowdepth'].max()
+        if pd.notna(max_depth): 
+            ax.set_ylim(0, max_depth + 10) 
+        ax.set_ylabel("Snow Depth (cm)")
+        
+        ax.grid(True, linestyle='--', alpha=0.7)
+        ax.legend()
 
-            # 3. --- Interactive Hover Tooltip Setup ---
-            # Create a hidden annotation box
-            annot = ax.annotate("", xy=(0,0), xytext=(15,15), textcoords="offset points",
-                                bbox=dict(boxstyle="round4,pad=0.5", fc="white", ec="black", lw=1, alpha=0.9),
-                                arrowprops=dict(arrowstyle="->", connectionstyle="arc3,rad=0.1"))
-            annot.set_visible(False)
+        # 3. --- Interactive Hover Tooltip Setup ---
+        # Create a hidden annotation box
+        annot = ax.annotate("", xy=(0,0), xytext=(15,15), textcoords="offset points",
+                            bbox=dict(boxstyle="round4,pad=0.5", fc="white", ec="black", lw=1, alpha=0.9),
+                            arrowprops=dict(arrowstyle="->", connectionstyle="arc3,rad=0.1"))
+        annot.set_visible(False)
 
-            def update_annot(ind, line_obj, method_name):
-                # ind["ind"] is a list of the points currently hovered. We grab the first one.
-                idx = ind["ind"][0] 
-                x_vals, y_vals = line_obj.get_data()
-                annot.xy = (x_vals[idx], y_vals[idx])
+        def update_annot(ind, line_obj, method_name):
+            # ind["ind"] is a list of the points currently hovered. We grab the first one.
+            idx = ind["ind"][0] 
+            x_vals, y_vals = line_obj.get_data()
+            annot.xy = (x_vals[idx], y_vals[idx])
+            
+            # Fetch corresponding row data from the DataFrame
+            df_idx = df.index[idx]
+            row = df.iloc[idx]
+            
+            filename = row.get('filename', 'Unknown')
+            dt_str = row.get('datetime', None)
+            
+            # Check if datetime is completely missing or 'Unknown'
+            if pd.isna(dt_str) or dt_str == "Unknown":
+                dt_str = "None"
                 
-                # Fetch corresponding row data from the DataFrame
-                df_idx = df.index[idx]
-                row = df.iloc[idx]
-                
-                filename = row.get('filename', 'Unknown')
-                dt_str = row.get('datetime', None)
-                
-                # Check if datetime is completely missing or 'Unknown'
-                if pd.isna(dt_str) or dt_str == "Unknown":
-                    dt_str = "None"
-                    
-                depth = y_vals[idx]
-                
-                # Format the text inside the tooltip
-                text = f"Index: {df_idx}\nFile: {filename}\nDate: {dt_str}\n{method_name}: {depth:.2f} cm"
-                annot.set_text(text)
+            depth = y_vals[idx]
+            
+            # Format the text inside the tooltip
+            text = f"Index: {df_idx}\nFile: {filename}\nDate: {dt_str}\n{method_name}: {depth:.2f} cm"
+            annot.set_text(text)
 
-            def hover(event):
-                vis = annot.get_visible()
-                if event.inaxes == ax:
-                    # Check if mouse is over the BBox line
-                    cont_bbox, ind_bbox = line_bbox.contains(event)
-                    if cont_bbox:
-                        update_annot(ind_bbox, line_bbox, "Depth (BBox)")
+        def hover(event):
+            vis = annot.get_visible()
+            if event.inaxes == ax:
+                # Check if mouse is over the BBox line
+                cont_bbox, ind_bbox = line_bbox.contains(event)
+                if cont_bbox:
+                    update_annot(ind_bbox, line_bbox, "Depth (BBox)")
+                    annot.set_visible(True)
+                    fig.canvas.draw_idle()
+                    return
+                
+                # Check if mouse is over the Mask line
+                if line_mask is not None:
+                    cont_mask, ind_mask = line_mask.contains(event)
+                    if cont_mask:
+                        update_annot(ind_mask, line_mask, "Depth (Mask)")
                         annot.set_visible(True)
                         fig.canvas.draw_idle()
                         return
-                    
-                    # Check if mouse is over the Mask line
-                    if line_mask is not None:
-                        cont_mask, ind_mask = line_mask.contains(event)
-                        if cont_mask:
-                            update_annot(ind_mask, line_mask, "Depth (Mask)")
-                            annot.set_visible(True)
-                            fig.canvas.draw_idle()
-                            return
-                    
-                    # Hide if not hovering over any line
-                    if vis:
-                        annot.set_visible(False)
-                        fig.canvas.draw_idle()
+                
+                # Hide if not hovering over any line
+                if vis:
+                    annot.set_visible(False)
+                    fig.canvas.draw_idle()
 
-            # Connect the hover function to the figure
-            fig.canvas.mpl_connect("motion_notify_event", hover)
-            # ---------------------------------------
+        # 4. --- Keyboard event for Enter Key ---
+        def on_key_press(event):
+            if event.key == 'enter':
+                # Save the figure to the camera output directory
+                save_path = os.path.join(camera_out_dir, f"{camera_name}_summary_plot.png")
+                fig.savefig(save_path, dpi=300, bbox_inches='tight')
+                print(f"\n[+] Summary plot saved to: {save_path}")
+                plt.close(fig) ### this should shutdown the plot
 
-            plt.tight_layout()
-            plt.show()
+        # Connect the functions to the figure
+        fig.canvas.mpl_connect("motion_notify_event", hover)
+        fig.canvas.mpl_connect("key_press_event", on_key_press)
+        # ---------------------------------------
+
+        plt.tight_layout()
+        plt.show()
+
+# Final completion message (This runs after the plot window is closed)
+    print(f"\nProcessing for camera {camera_name} complete!\n")
 # else:
-    print(f"Error: Model not found at {best_model_path}")
+    #rint(f"Error: Model not found at {best_model_path}")
