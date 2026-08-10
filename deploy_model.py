@@ -199,7 +199,7 @@ if pixel_centimeter_conversion == 'NA':
     "centimeter conversion by dividing the pixel length by the centimeter length (pixel/ centimeter = pixel to centimeter conversion). Now when it calculates the snow depth in pixels, it can convert that to real-world centimeters. \n "
     "Usually your calibration target is the full pole (if you know the length in centimeters) or a 10-cm top or some other segment that you have measured in the field. This next step is very important.")
 
-    calibration_target = float(input("Enter the known length in *cm* of the area you will click. This needs to be either the full pole height in cm if you have that measurement OR a small segment \n" \
+    calibration_target = float(input("\n Enter the known length in *cm* of the area you will click. This needs to be either the full pole height in cm if you have that measurement OR a small segment \n" \
     "that you know the height of, such as a 10 cm top: "))
 
     print("A window will open. Click exactly TWO points: the TOP and BOTTOM of your calibration target.")
