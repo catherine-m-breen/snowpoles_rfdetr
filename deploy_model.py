@@ -192,15 +192,22 @@ if pixel_centimeter_conversion == 'NA':
     print("-" * 20)
     print('No pixel centimeter conversion factor stored. Loading the reference/ snow-free image to identify the pixel-centimeter conversion')
     print("-" * 20)
-    calibration_target = float(input("Enter the known length in cm you will click (e.g., total pole length or 10): "))
 
+    print("\n*** INSTRUCTIONS ***")
+    print("For this code to run, you need to tell the computer how many pixels in the image correspond to centimeters. This is because the computer first finds the length in pixels and then converts to centimeters. \n"
+    "To do so, we pick an area of the image that we know the length of in cm and click the length (by clicking the top and bottom). The computer then figures out what this is in pixels, and then it figures out the pixel to \n"
+    "centimeter conversion by dividing the pixel length by the centimeter length (pixel/ centimeter = pixel to centimeter conversion). Now when it calculates the snow depth in pixels, it can convert that to real-world centimeters. \n "
+    "Usually your calibration target is the full pole (if you know the length in centimeters) or a 10-cm top or some other segment that you have measured in the field. This next step is very important.")
+
+    calibration_target = float(input("Enter the known length in *cm* of the area you will click. This needs to be either the full pole height in cm if you have that measurement OR a small segment \n" \
+    "that you know the height of, such as a 10 cm top: "))
+
+    print("A window will open. Click exactly TWO points: the TOP and BOTTOM of your calibration target.")
+    print("Middle click or Right click to undo a point if you mess up.")
     # Read and convert image for matplotlib (Convert Path to string to avoid cv2 errors)
     ref_image_cv = cv2.imread(str(ref_img_path))
     ref_image_rgb = cv2.cvtColor(ref_image_cv, cv2.COLOR_BGR2RGB)
-    
-    print("\n*** INSTRUCTIONS ***")
-    print("A window will open. Click exactly TWO points: the TOP and BOTTOM of your calibration target.")
-    print("Middle click or Right click to undo a point if you mess up.")
+
      
     # Plot the reference image and use ginput
     fig, ax = plt.subplots(figsize=(10, 8))
