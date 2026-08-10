@@ -17,7 +17,11 @@ import math
 from pathlib import Path
 import pandas as pd
 import tqdm
+import datetime
 from matplotlib.widgets import Button  # Added for the Reset button
+## additional packages ## 
+import plotly.express as px ## need to do conda install
+import IPython
 
 print("--- Snowpole Setup ---")
 '''
@@ -393,7 +397,39 @@ if os.path.exists(best_model_path):
         base_name = os.path.basename(img_path)
         # print(f"\nProcessing {base_name}...") # Commented out so it doesn't mess up tqdm progress bar
         image = cv2.imread(img_path)
-        
+
+        formatted_datetime = None
+        try: 
+            # 1. Try to get the EXIF creation time by looking for the syntax pattern
+            with Image.open(img_path) as pil_img:
+                IPython.embed()
+                exif_data = pil_img._getexif()
+                raw_time = None
+                
+                if exif_data:
+                    # Regex pattern for exactly "YYYY:MM:DD HH:MM:SS"
+                    date_pattern = re.compile(r"^\d{4}:\d{2}:\d{2} \d{2}:\d{2}:\d{2}$")
+                    
+                    for value in exif_data.values():
+                        if isinstance(value, str) and date_pattern.match(value):
+                            raw_time = value
+                            break # We found it! Stop searching.
+                
+                if raw_time:
+                    dt_c = datetime.datetime.strptime(raw_time, '%Y:%m:%d %H:%M:%S')
+                    formatted_datetime = dt_c.strftime("%m/%d/%Y %H:%M")
+                else:
+                    raise ValueError("No matching EXIF time syntax found")
+                    
+        except Exception: 
+            # 2. Fallback: get the OS modification time if EXIF is missing or corrupted
+            try:
+                creationTime = os.path.getmtime(img_path)
+                dt_c = datetime.datetime.fromtimestamp(creationTime)
+                formatted_datetime = dt_c.strftime("%m/%d/%Y %H:%M")
+            except Exception:
+                formatted_datetime = "Unknown" 
+
         detections = model.predict(image)
         # 1. Safety check: create a list of 'None' if masks are missing
         masks = detections.mask if detections.mask is not None else [None] * len(detections.xyxy)
@@ -472,6 +508,7 @@ if os.path.exists(best_model_path):
                 'image_directory': str(camera_image_path), 
                 'pole_length': total_pole_cm_input,
                 'filename': base_name,
+                'datetime':formatted_datetime,
                 'snowdepth': snow_depth_cm,
                 'snowdepth_mask': snow_depth_cm_mask,
                 'pixellength': pole_length_px,
@@ -528,27 +565,158 @@ if os.path.exists(best_model_path):
     print(f"Example visualizations saved to: {viz_dir}")
     print("-" * 20)
 
-    if not df.empty and 'snowdepth' in df.columns:
-        print("\nGenerating Snow Depth summary plot...")
-        plt.figure(figsize=(10, 6))
+    # if not df.empty and 'snowdepth' in df.columns:
+    #     print("\nGenerating Snow Depth summary plot...")
+    #     plt.figure(figsize=(10, 6))
         
-        # Plot Bounding Box based snow depth
-        plt.plot(df.index, df['snowdepth'], marker='o', linestyle='-', color='b', label='Snow Depth (BBox)')
+    #     # Plot Bounding Box based snow depth
+    #     plt.plot(df.index, df['snowdepth'], marker='o', linestyle='-', color='b', label='Snow Depth (BBox)')
         
-        # Plot Mask based snow depth if available (so you can compare them!)
-        if 'snowdepth_mask' in df.columns and not df['snowdepth_mask'].isna().all():
-            plt.plot(df.index, df['snowdepth_mask'], marker='x', linestyle='--', color='r', alpha=0.7, label='Snow Depth (Mask)')
+    #     # Plot Mask based snow depth if available (so you can compare them!)
+    #     if 'snowdepth_mask' in df.columns and not df['snowdepth_mask'].isna().all():
+    #         plt.plot(df.index, df['snowdepth_mask'], marker='x', linestyle='--', color='r', alpha=0.7, label='Snow Depth (Mask)')
             
-        plt.title(f"Estimated Snow Depth over Time/Images - {camera_name}")
-        max_depth = df['snowdepth'].max()
-        if pd.notna(max_depth): # Only set ylim if we actually have valid numbers
-            plt.ylim(0, max_depth + 10) # Added +10cm for a little visual padding at the top
+    #     plt.title(f"Estimated Snow Depth over Time/Images - {camera_name}")
+    #     max_depth = df['snowdepth'].max()
+    #     if pd.notna(max_depth): # Only set ylim if we actually have valid numbers
+    #         plt.ylim(0, max_depth + 10) # Added +10cm for a little visual padding at the top
 
-        plt.xlabel("Image Index")
-        plt.ylabel("Snow Depth (cm)")
-        plt.grid(True, linestyle='--', alpha=0.7)
-        plt.legend()
-        plt.tight_layout()
-        plt.show()  # This will pause and display the pop-up plot to the user
-else:
+    #     plt.xlabel("Image Index")
+    #     plt.ylabel("Snow Depth (cm)")
+    #     plt.grid(True, linestyle='--', alpha=0.7)
+    #     plt.legend()
+    #     plt.tight_layout()
+    #     plt.show()  # This will pause and display the pop-up plot to the user
+
+#     if not df.empty and 'snowdepth' in df.columns:
+#         print("\nGenerating Interactive Snow Depth summary plot...")
+        
+#         # Determine which columns to plot
+#         y_cols = ['snowdepth']
+#         if 'snowdepth_mask' in df.columns and not df['snowdepth_mask'].isna().all():
+#             y_cols.append('snowdepth_mask')
+            
+#         # Create interactive Plotly figure
+#         fig = px.line(df, 
+#                       x=df.index, 
+#                       y=y_cols, 
+#                       markers=True,
+#                       hover_data=['filename', 'datetime'], # Adds these to the hover tooltip!
+#                       title=f"Estimated Snow Depth over Time/Images - {camera_name}",
+#                       labels={
+#                           'index': 'Image Index', 
+#                           'value': 'Snow Depth (cm)', 
+#                           'variable': 'Calculation Method'
+#                       })
+        
+#         # Optionally, format the hover template to make it look cleaner
+#         fig.update_traces(hovertemplate="<b>%{customdata[0]}</b><br>Time: %{customdata[1]}<br>Depth: %{y:.2f} cm")
+        
+#         # Sets Y-axis minimum to 0
+#         fig.update_yaxes(rangemode="tozero")
+        
+#         # Opens the interactive plot in your default web browser
+#         fig.show() 
+
+    if not df.empty and 'snowdepth' in df.columns:
+            print("\nGenerating Interactive Snow Depth summary plot...")
+            
+            # 1. Figure out if we should use datetime or index for the X-axis
+            # Convert the datetime strings into actual datetime objects for plotting
+            parsed_dt = pd.to_datetime(df['datetime'], errors='coerce')
+            
+            # If we have at least one valid datetime, use datetimes for the X-axis
+            use_datetime = not parsed_dt.isna().all()
+            x_data = parsed_dt if use_datetime else df.index
+            x_label = "Date / Time" if use_datetime else "Image Index"
+
+            # 2. Setup the plot
+            fig, ax = plt.subplots(figsize=(10, 6))
+            
+            # Plot Bounding Box based snow depth (note the comma after line_bbox)
+            line_bbox, = ax.plot(x_data, df['snowdepth'], marker='o', linestyle='-', color='b', label='Snow Depth (BBox)')
+            
+            # Plot Mask based snow depth if available
+            line_mask = None
+            if 'snowdepth_mask' in df.columns and not df['snowdepth_mask'].isna().all():
+                line_mask, = ax.plot(x_data, df['snowdepth_mask'], marker='x', linestyle='--', color='r', alpha=0.7, label='Snow Depth (Mask)')
+                
+            ax.set_title(f"Estimated Snow Depth over Time/Images - {camera_name}")
+            
+            # Format X-axis
+            ax.set_xlabel(x_label)
+            if use_datetime:
+                fig.autofmt_xdate() # Rotates the dates so they don't overlap
+                
+            # Format Y-axis
+            max_depth = df['snowdepth'].max()
+            if pd.notna(max_depth): 
+                ax.set_ylim(0, max_depth + 10) 
+            ax.set_ylabel("Snow Depth (cm)")
+            
+            ax.grid(True, linestyle='--', alpha=0.7)
+            ax.legend()
+
+            # 3. --- Interactive Hover Tooltip Setup ---
+            # Create a hidden annotation box
+            annot = ax.annotate("", xy=(0,0), xytext=(15,15), textcoords="offset points",
+                                bbox=dict(boxstyle="round4,pad=0.5", fc="white", ec="black", lw=1, alpha=0.9),
+                                arrowprops=dict(arrowstyle="->", connectionstyle="arc3,rad=0.1"))
+            annot.set_visible(False)
+
+            def update_annot(ind, line_obj, method_name):
+                # ind["ind"] is a list of the points currently hovered. We grab the first one.
+                idx = ind["ind"][0] 
+                x_vals, y_vals = line_obj.get_data()
+                annot.xy = (x_vals[idx], y_vals[idx])
+                
+                # Fetch corresponding row data from the DataFrame
+                df_idx = df.index[idx]
+                row = df.iloc[idx]
+                
+                filename = row.get('filename', 'Unknown')
+                dt_str = row.get('datetime', None)
+                
+                # Check if datetime is completely missing or 'Unknown'
+                if pd.isna(dt_str) or dt_str == "Unknown":
+                    dt_str = "None"
+                    
+                depth = y_vals[idx]
+                
+                # Format the text inside the tooltip
+                text = f"Index: {df_idx}\nFile: {filename}\nDate: {dt_str}\n{method_name}: {depth:.2f} cm"
+                annot.set_text(text)
+
+            def hover(event):
+                vis = annot.get_visible()
+                if event.inaxes == ax:
+                    # Check if mouse is over the BBox line
+                    cont_bbox, ind_bbox = line_bbox.contains(event)
+                    if cont_bbox:
+                        update_annot(ind_bbox, line_bbox, "Depth (BBox)")
+                        annot.set_visible(True)
+                        fig.canvas.draw_idle()
+                        return
+                    
+                    # Check if mouse is over the Mask line
+                    if line_mask is not None:
+                        cont_mask, ind_mask = line_mask.contains(event)
+                        if cont_mask:
+                            update_annot(ind_mask, line_mask, "Depth (Mask)")
+                            annot.set_visible(True)
+                            fig.canvas.draw_idle()
+                            return
+                    
+                    # Hide if not hovering over any line
+                    if vis:
+                        annot.set_visible(False)
+                        fig.canvas.draw_idle()
+
+            # Connect the hover function to the figure
+            fig.canvas.mpl_connect("motion_notify_event", hover)
+            # ---------------------------------------
+
+            plt.tight_layout()
+            plt.show()
+# else:
     print(f"Error: Model not found at {best_model_path}")
