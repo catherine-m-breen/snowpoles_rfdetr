@@ -17,6 +17,7 @@ import math
 from pathlib import Path
 import pandas as pd
 import tqdm
+from matplotlib.widgets import Button  # Added for the Reset button
 
 print("--- Snowpole Setup ---")
 '''
@@ -137,6 +138,67 @@ if saved_configs == "N":
     print(f"Camera Output Directory:     {camera_out_dir}")
     print("-" * 20)
 
+
+##########zoom function for calibration clicking ##########
+def enable_scroll_zoom_and_pan(ax, base_scale=1.2):
+    """Enables mouse-wheel zooming and right-click panning for a matplotlib axis"""
+    pan_state = {'is_panning': False, 'start_x': None, 'start_y': None, 'start_xlim': None, 'start_ylim': None}
+
+    def zoom(event):
+        if event.inaxes != ax: return
+        cur_xlim = ax.get_xlim()
+        cur_ylim = ax.get_ylim()
+        xdata = event.xdata 
+        ydata = event.ydata 
+        
+        if event.button == 'up':
+            scale_factor = 1 / base_scale # zoom in
+        elif event.button == 'down':
+            scale_factor = base_scale     # zoom out
+        else:
+            return
+
+        new_width = (cur_xlim[1] - cur_xlim[0]) * scale_factor
+        new_height = (cur_ylim[1] - cur_ylim[0]) * scale_factor
+        relx = (cur_xlim[1] - xdata)/(cur_xlim[1] - cur_xlim[0])
+        rely = (cur_ylim[1] - ydata)/(cur_ylim[1] - cur_ylim[0])
+
+        ax.set_xlim([xdata - new_width * (1-relx), xdata + new_width * (relx)])
+        ax.set_ylim([ydata - new_height * (1-rely), ydata + new_height * (rely)])
+        ax.figure.canvas.draw_idle()
+
+    def press(event):
+        # Button 3 is the RIGHT mouse button
+        if event.button == 3 and event.inaxes == ax:
+            pan_state['is_panning'] = True
+            pan_state['start_x'] = event.x
+            pan_state['start_y'] = event.y
+            pan_state['start_xlim'] = ax.get_xlim()
+            pan_state['start_ylim'] = ax.get_ylim()
+
+    def release(event):
+        if event.button == 3:
+            pan_state['is_panning'] = False
+
+    def motion(event):
+        if pan_state['is_panning'] and pan_state['start_x'] is not None:
+            dx_pixels = event.x - pan_state['start_x']
+            dy_pixels = event.y - pan_state['start_y']
+            bbox = ax.get_window_extent()
+            dx_data = dx_pixels * (pan_state['start_xlim'][1] - pan_state['start_xlim'][0]) / bbox.width
+            dy_data = dy_pixels * (pan_state['start_ylim'][1] - pan_state['start_ylim'][0]) / bbox.height
+            
+            ax.set_xlim(pan_state['start_xlim'][0] - dx_data, pan_state['start_xlim'][1] - dx_data)
+            ax.set_ylim(pan_state['start_ylim'][0] - dy_data, pan_state['start_ylim'][1] - dy_data)
+            ax.figure.canvas.draw_idle()
+
+    ax.figure.canvas.mpl_connect('scroll_event', zoom)
+    ax.figure.canvas.mpl_connect('button_press_event', press)
+    ax.figure.canvas.mpl_connect('button_release_event', release)
+    ax.figure.canvas.mpl_connect('motion_notify_event', motion)
+
+
+
 '''
 Download model
 
@@ -212,7 +274,28 @@ if pixel_centimeter_conversion == 'NA':
     # Plot the reference image and use ginput
     fig, ax = plt.subplots(figsize=(10, 8))
     ax.imshow(ref_image_rgb)
-    ax.set_title("Click top and bottom of the calibration target")
+    ax.set_title("Click top and bottom of calibration target\n(Scroll = Zoom | Right-Click+Drag = Pan | 'Backspace' = Undo Point | 'r' = Reset View)")
+    
+    # Save the original boundaries for resetting
+    orig_xlim = ax.get_xlim()
+    orig_ylim = ax.get_ylim()
+
+    def reset_view(event):
+        ax.set_xlim(orig_xlim)
+        ax.set_ylim(orig_ylim)
+        fig.canvas.draw_idle()
+
+    # Enable Reset via the 'r' keyboard shortcut
+    fig.canvas.mpl_connect('key_press_event', lambda event: reset_view(event) if event.key == 'r' else None)
+
+    # Enable Reset via UI Button
+    ax_reset = plt.axes([0.4, 0.05, 0.2, 0.075])  # [left, bottom, width, height]
+    btn_reset = Button(ax_reset, 'Reset Zoom')
+    btn_reset.on_clicked(reset_view)
+    
+    # Attach your custom scroll and pan logic to the axes
+    enable_scroll_zoom_and_pan(ax)
+
     
     # ginput(2) waits for 2 clicks, timeout=0 means it waits forever
     points = plt.ginput(2, timeout=0) 
