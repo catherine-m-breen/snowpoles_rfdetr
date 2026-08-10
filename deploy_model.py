@@ -380,7 +380,7 @@ if os.path.exists(best_model_path):
     print("-" * 20)
     
     # --- RUN PREDICTIONS ON SNOWY IMAGES ---
-    images = glob.glob(os.path.join(camera_image_path, '*.[jJ][pP]*[gG]'))
+    images = sorted(glob.glob(os.path.join(camera_image_path, '*.[jJ][pP]*[gG]')))
     sample_images = images #[:5] 
     
     print(f"\nGenerating predictions for {len(sample_images)} test samples...")
@@ -445,6 +445,11 @@ if os.path.exists(best_model_path):
                     pole_length_px_mask = math.hypot(dx_mask, dy_mask)
                     visible_length_cm_mask = pole_length_px_mask * conversion_factor
                     snow_depth_cm_mask = total_pole_cm - visible_length_cm_mask
+                    flag = 0
+                    # Check if either value exists AND is less than -20
+                    if (snow_depth_cm is not None and snow_depth_cm < -20) or \
+                    (snow_depth_cm_mask is not None and snow_depth_cm_mask < -20):
+                        flag = 1
             ####################
 
 
@@ -472,7 +477,8 @@ if os.path.exists(best_model_path):
                 'pixellength': pole_length_px,
                 'pixellength_mask': pole_length_px_mask,
                 'conversion': pixel_centimeter_conversion,
-                'notes': other_info
+                'notes': other_info,
+                'flag':flag
             })
         
         # Annotate
@@ -521,5 +527,25 @@ if os.path.exists(best_model_path):
     print(f"Data saved to CSV: {csv_file_path}")
     print(f"Example visualizations saved to: {viz_dir}")
     print("-" * 20)
+
+    if not df.empty and 'snowdepth' in df.columns:
+        print("\nGenerating Snow Depth summary plot...")
+        plt.figure(figsize=(10, 6))
+        
+        # Plot Bounding Box based snow depth
+        plt.plot(df.index, df['snowdepth'], marker='o', linestyle='-', color='b', label='Snow Depth (BBox)')
+        
+        # Plot Mask based snow depth if available (so you can compare them!)
+        if 'snowdepth_mask' in df.columns and not df['snowdepth_mask'].isna().all():
+            plt.plot(df.index, df['snowdepth_mask'], marker='x', linestyle='--', color='r', alpha=0.7, label='Snow Depth (Mask)')
+            
+        plt.title(f"Estimated Snow Depth over Time/Images - {camera_name}")
+        plt.ylim(0,max(df['snowdepth']))
+        plt.xlabel("Image Index")
+        plt.ylabel("Snow Depth (cm)")
+        plt.grid(True, linestyle='--', alpha=0.7)
+        plt.legend()
+        plt.tight_layout()
+        plt.show()  # This will pause and display the pop-up plot to the user
 else:
     print(f"Error: Model not found at {best_model_path}")
