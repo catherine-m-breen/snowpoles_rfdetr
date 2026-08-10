@@ -178,5 +178,5 @@ Austin Cobb (2)
 Gusta Josephine (2)
 Payton Stull (2)
 
-(1) NASA Goddard Space Flight Center
-(2) Fond du Lac Tribal and Community College 
+<p>(1) NASA Goddard Space Flight Center</p>
+<p>(2) Fond du Lac Tribal and Community College </p>
