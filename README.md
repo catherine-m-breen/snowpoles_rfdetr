@@ -171,5 +171,12 @@ Ensure your file path is exactly correct, contains no typos, and is <b>not</b> w
 
 Breen, C. M., Currier, W. R., Vuyovich, C., Miao, Z., & Prugh, L. R. (2024). Snow Depth Extraction From Time‐Lapse Imagery Using a Keypoint Deep Learning Model. Water Resources Research, 60(7), e2023WR036682. https://doi.org/10.1029/2023WR036682
 
+##  Authors 
 
+Catherine M Breen (1)
+Austin Cobb (2)
+Gusta Josephine (2)
+Payton Stull (2)
 
+(1) NASA Goddard Space Flight Center
+(2) Fond du Lac Tribal and Community College 
