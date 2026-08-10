@@ -445,11 +445,11 @@ if os.path.exists(best_model_path):
                     pole_length_px_mask = math.hypot(dx_mask, dy_mask)
                     visible_length_cm_mask = pole_length_px_mask * conversion_factor
                     snow_depth_cm_mask = total_pole_cm - visible_length_cm_mask
-                    flag = 0
-                    # Check if either value exists AND is less than -20
-                    if (snow_depth_cm is not None and snow_depth_cm < -20) or \
-                    (snow_depth_cm_mask is not None and snow_depth_cm_mask < -20):
-                        flag = 1
+                flag = 0
+                # Check if either value exists AND is less than -20
+                if (snow_depth_cm is not None and snow_depth_cm < -20) or \
+                (snow_depth_cm_mask is not None and snow_depth_cm_mask < -20):
+                    flag = 1
             ####################
 
 
@@ -540,7 +540,10 @@ if os.path.exists(best_model_path):
             plt.plot(df.index, df['snowdepth_mask'], marker='x', linestyle='--', color='r', alpha=0.7, label='Snow Depth (Mask)')
             
         plt.title(f"Estimated Snow Depth over Time/Images - {camera_name}")
-        plt.ylim(0,max(df['snowdepth']))
+        max_depth = df['snowdepth'].max()
+        if pd.notna(max_depth): # Only set ylim if we actually have valid numbers
+            plt.ylim(0, max_depth + 10) # Added +10cm for a little visual padding at the top
+
         plt.xlabel("Image Index")
         plt.ylabel("Snow Depth (cm)")
         plt.grid(True, linestyle='--', alpha=0.7)
