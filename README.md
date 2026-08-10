@@ -36,7 +36,15 @@ This script processes a time series of timelapse camera images to automatically 
     - Git: https://git-scm.com/book/en/v2/Getting-Started-Installing-Git 
     - Miniconda: 
         - Windows: https://www.anaconda.com/docs/getting-started/miniconda/install/windows-gui-install
-        - Mac: https://www.anaconda.com/docs/getting-started/miniconda/install/mac-gui-install 
+        - Mac: https://www.anaconda.com/docs/getting-started/miniconda/install/mac-gui-install  
+
+> [!NOTE]  
+> **What is Git and why are we using it?** 🕰️  
+> *A brief history:* Git was created in 2005 by Linus Torvalds (the same person who created the Linux operating system) because he needed a better way for thousands of developers to collaborate on code without overwriting each other's work. It is a "version control system" — essentially a time machine and "track changes" tool for code. Using Git in this case allows you to be able to incorporate changes without having to redownload the folder every time. You can run the command "git pull" and the code will automatically update with any changes.
+> 
+> *Why use it here?* Instead of downloading a static `.zip` file of this tool that might quickly become outdated, Git allows you to "clone" (download) a live connection to this repository. When we update the model or fix bugs in the future, you can simply ask Git to "pull" the latest updates to your computer with a single command, rather than having to manually redownload and replace files!
+
+
 2. **Create a Workspace:** If you have not already, download VSCode from the link in Step 1. Now, in VSCode, create a new folder that will be your code folder. Call it `snowpoles_code`.
 3. **Open Terminal:** Now we will load the packages from the "terminal" of VSCode. Look at the top menu, click **Terminal -> New Terminal**. A window will open at the bottom of your screen. 
     - For Mac users: Command + J will also open a terminal window at the bottom of the screen. 
