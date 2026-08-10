@@ -389,7 +389,7 @@ if os.path.exists(best_model_path):
     csv_file_path = os.path.join(csv_dir, f"{camera_name}_snowdepth.csv")
     results_data = [] 
     
-    for i, img_path in tqdm.tqdm(enumerate(sample_images)):
+    for i, img_path in tqdm.tqdm(enumerate(sample_images), total=len(sample_images)):
         base_name = os.path.basename(img_path)
         # print(f"\nProcessing {base_name}...") # Commented out so it doesn't mess up tqdm progress bar
         image = cv2.imread(img_path)
