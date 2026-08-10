@@ -435,18 +435,79 @@ if os.path.exists(best_model_path):
     
     # Set the CSV output path using the dynamic csv directory
     csv_file_path = os.path.join(csv_dir, f"{camera_name}_snowdepth.csv")
+    # results_data = [] 
+    
+    # for i, img_path in tqdm.tqdm(enumerate(sample_images), total=len(sample_images)):
+    #     base_name = os.path.basename(img_path)
+    #     # print(f"\nProcessing {base_name}...") # Commented out so it doesn't mess up tqdm progress bar
+    #     image = cv2.imread(img_path)
+
+    #     formatted_datetime = None
+    #     try: 
+    #         # 1. Try to get the EXIF creation time by looking for the syntax pattern
+    #         with Image.open(img_path) as pil_img:
+    #             #IPython.embed()
+    #             exif_data = pil_img._getexif()
+    #             raw_time = None
+                
+    #             if exif_data:
+    #                 # Regex pattern for exactly "YYYY:MM:DD HH:MM:SS"
+    #                 date_pattern = re.compile(r"^\d{4}:\d{2}:\d{2} \d{2}:\d{2}:\d{2}$")
+                    
+    #                 for value in exif_data.values():
+    #                     if isinstance(value, str) and date_pattern.match(value):
+    #                         raw_time = value
+    #                         break # We found it! Stop searching.
+                
+    #             if raw_time:
+    #                 dt_c = datetime.datetime.strptime(raw_time, '%Y:%m:%d %H:%M:%S')
+    #                 formatted_datetime = dt_c.strftime("%m/%d/%Y %H:%M")
+    #             else:
+    #                 raise ValueError("No matching EXIF time syntax found")
+                    
+    #     except Exception: 
+    #         # 2. Fallback: get the OS modification time if EXIF is missing or corrupted
+    #         try:
+    #             creationTime = os.path.getmtime(img_path)
+    #             dt_c = datetime.datetime.fromtimestamp(creationTime)
+    #             formatted_datetime = dt_c.strftime("%m/%d/%Y %H:%M")
+    #         except Exception:
+    #             formatted_datetime = "Unknown" 
+
+         # ---------------------------------------------------------
+    # --- CHECKPOINT/RESUME LOGIC: SKIP PROCESSED IMAGES ---
+    # ---------------------------------------------------------
+    processed_files = set()
     results_data = [] 
+    
+    if os.path.exists(csv_file_path):
+        print(f"\nFound existing CSV checkpoint at: {csv_file_path}")
+        try:
+            existing_df = pd.read_csv(csv_file_path)
+            if not existing_df.empty and 'filename' in existing_df.columns:
+                processed_files = set(existing_df['filename'])
+                # Load previously processed files so we don't overwrite them
+                results_data = existing_df.to_dict('records') 
+                print(f"Loaded {len(processed_files)} previously processed images. Skipping these...")
+        except Exception as e:
+            print(f"Warning: Could not read existing CSV ({e}). Starting from scratch.")
+
+    # Filter out images we have already processed
+    sample_images = [img for img in images if os.path.basename(img) not in processed_files]
+    
+    if len(sample_images) == 0:
+        print(f"\nAll {len(images)} images have already been processed! Displaying summary plot...")
+    else:
+        print(f"\nGenerating predictions for {len(sample_images)} test samples...")
     
     for i, img_path in tqdm.tqdm(enumerate(sample_images), total=len(sample_images)):
         base_name = os.path.basename(img_path)
-        # print(f"\nProcessing {base_name}...") # Commented out so it doesn't mess up tqdm progress bar
         image = cv2.imread(img_path)
 
         formatted_datetime = None
         try: 
             # 1. Try to get the EXIF creation time by looking for the syntax pattern
             with Image.open(img_path) as pil_img:
-                #IPython.embed()
                 exif_data = pil_img._getexif()
                 raw_time = None
                 
@@ -587,6 +648,10 @@ if os.path.exists(best_model_path):
             save_path = os.path.join(viz_dir, out_name)
 
             pil_img.save(save_path)
+
+        ######## checkpoint every 10#####
+        if (i + 1) % 10 == 0:
+            pd.DataFrame(results_data).to_csv(csv_file_path, index=False)
 
     df = pd.DataFrame(results_data)
     df.to_csv(csv_file_path, index=False)
