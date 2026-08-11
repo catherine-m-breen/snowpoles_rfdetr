@@ -21,12 +21,12 @@ import datetime
 from matplotlib.widgets import Button  # Added for the Reset button
 ## additional packages ## 
 #import plotly.express as px ## need to do conda install
-#import IPython
+import IPython
 import re
 import torch 
 import gc
 
-torch.set_num_threads(4) 
+torch.set_num_threads(2) 
 
 print("--- Snowpole Setup ---")
 '''
@@ -435,7 +435,7 @@ if os.path.exists(best_model_path):
     images = sorted(glob.glob(os.path.join(camera_image_path, '*.[jJ][pP]*[gG]')))
     sample_images = images #[:5] 
     
-    print(f"\nGenerating predictions for {len(sample_images)} test samples...")
+    #print(f"\nGenerating predictions for {len(sample_images)} test samples...")
     
     # Set the CSV output path using the dynamic csv directory
     csv_file_path = os.path.join(csv_dir, f"{camera_name}_snowdepth.csv")
@@ -502,7 +502,11 @@ if os.path.exists(best_model_path):
     if len(sample_images) == 0:
         print(f"\nAll {len(images)} images have already been processed! Displaying summary plot...")
     else:
-        print(f"\nGenerating predictions for {len(sample_images)} test samples...")
+        print(f"\nGenerating predictions for {len(sample_images)} images...")
+
+
+    active_anchors = {} # This will store the expected X-coordinate of each pole
+    MAX_SHIFT_PX = 1500 # The max pixels a pole can move between frames before it's considered a "new" pole
     
     for i, img_path in tqdm.tqdm(enumerate(sample_images), total=len(sample_images)):
         base_name = os.path.basename(img_path)
@@ -539,83 +543,164 @@ if os.path.exists(best_model_path):
             except Exception:
                 formatted_datetime = "Unknown" 
         with torch.no_grad():
+            #IPython.embed()
             detections = model.predict(image)
+            master_mask = detections.mask[0] if detections.mask is not None and len(detections.mask) > 0 else None
+        
         # 1. Safety check: create a list of 'None' if masks are missing
-        masks = detections.mask if detections.mask is not None else [None] * len(detections.xyxy)
+        #masks = detections.mask if detections.mask is not None else [None] * len(detections.xyxy)
         # 2. Correctly unpack the index (j) and the zipped items (xyxy, mask)
-        for j, (xyxy, mask) in enumerate(zip(detections.xyxy, masks)):
-            x_min, y_min, x_max, y_max = xyxy
-            # Calculate vertical and horizontal differences
-            dy = y_max - y_min
-            dx = x_max - x_min
-            # If the pole is tilted (bounding box is wider than 10 pixels)
-            # use the hypotenuse 
-            if dx > 10:
-                pole_length_px = math.hypot(dx, dy) 
-            else:
-                pole_length_px = dy
+        # for j, (xyxy, mask) in enumerate(zip(detections.xyxy, masks)):
+        #     x_min, y_min, x_max, y_max = xyxy
+        #     # Calculate vertical and horizontal differences
+        #     dy = y_max - y_min
+        #     dx = x_max - x_min
+        #     # If the pole is tilted (bounding box is wider than 10 pixels)
+        #     # use the hypotenuse 
+        #     if dx > 10:
+        #         pole_length_px = math.hypot(dx, dy) 
+        #     else:
+        #         pole_length_px = dy
 
-            visible_length_cm = pole_length_px * conversion_factor
-            snow_depth_cm = total_pole_cm - visible_length_cm
-
-            ####################
-            #   # Get the row (y) and column (x) coordinates of all pixels that make up the pole
-            # y_indices, x_indices = np.where(mask)
-            # if len(y_indices) == 0:
-            #     continue
-            # top_idx = np.argmin(y_indices)
-            # x_top, y_top = x_indices[top_idx], y_indices[top_idx]
-            # bottom_idx = np.argmax(y_indices)
-            # x_bottom, y_bottom = x_indices[bottom_idx], y_indices[bottom_idx]
-            # dx = x_bottom - x_top
-            # dy = y_bottom - y_top
-            # pole_length_px = math.hypot(dx, dy)
-            # visible_length_cm = pole_length_px * conversion_factor
-            # snow_depth_cm_mask = total_pole_cm - visible_length_cm
-            snow_depth_cm_mask = None
-            pole_length_px_mask = None
+        #     visible_length_cm = pole_length_px * conversion_factor
+        #     snow_depth_cm = total_pole_cm - visible_length_cm
+        #     snow_depth_cm_mask = None
+        #     pole_length_px_mask = None
             
-            if mask is not None:
-                y_indices, x_indices = np.where(mask)
-                if len(y_indices) > 0:  # Only proceed if the mask isn't empty
-                    top_idx = np.argmin(y_indices)
-                    x_top, y_top = x_indices[top_idx], y_indices[top_idx]
+        #     if mask is not None:
+        #         y_indices, x_indices = np.where(mask)
+        #         if len(y_indices) > 0:  # Only proceed if the mask isn't empty
+        #             top_idx = np.argmin(y_indices)
+        #             x_top, y_top = x_indices[top_idx], y_indices[top_idx]
                     
-                    bottom_idx = np.argmax(y_indices)
-                    x_bottom, y_bottom = x_indices[bottom_idx], y_indices[bottom_idx]
+        #             bottom_idx = np.argmax(y_indices)
+        #             x_bottom, y_bottom = x_indices[bottom_idx], y_indices[bottom_idx]
                     
-                    dx_mask = x_bottom - x_top
-                    dy_mask = y_bottom - y_top
+        #             dx_mask = x_bottom - x_top
+        #             dy_mask = y_bottom - y_top
                     
-                    pole_length_px_mask = math.hypot(dx_mask, dy_mask)
-                    visible_length_cm_mask = pole_length_px_mask * conversion_factor
-                    snow_depth_cm_mask = total_pole_cm - visible_length_cm_mask
-                flag = 0
-                # Check if either value exists AND is less than -20
-                if (snow_depth_cm is not None and snow_depth_cm < -20) or \
-                (snow_depth_cm_mask is not None and snow_depth_cm_mask < -20):
-                    flag = 1
-            ####################
+        #             pole_length_px_mask = math.hypot(dx_mask, dy_mask)
+        #             visible_length_cm_mask = pole_length_px_mask * conversion_factor
+        #             snow_depth_cm_mask = total_pole_cm - visible_length_cm_mask
+        #         flag = 0
+        #         # Check if either value exists AND is less than -20
+        #         if (snow_depth_cm is not None and snow_depth_cm < -20) or \
+        #         (snow_depth_cm_mask is not None and snow_depth_cm_mask < -20):
+        #             flag = 1
+        #     ####################
 
-            results_data.append({
+        #     results_data.append({
+        #         'camera_id': camera_name,
+        #         'season': camera_season, 
+        #         'location': location_information, 
+        #         'image_directory': str(camera_image_path), 
+        #         'pole_length': total_pole_cm_input,
+        #         'filename': base_name,
+        #         'datetime':formatted_datetime,
+        #         'snowdepth': snow_depth_cm,
+        #         'snowdepth_mask': snow_depth_cm_mask,
+        #         'pixellength': pole_length_px,
+        #         'pixellength_mask': pole_length_px_mask,
+        #         'conversion': pixel_centimeter_conversion,
+        #         'notes': other_info,
+        #         'flag':flag
+        #     })
+        # 2. Correctly unpack the index (j) and the zipped items (xyxy, mask)
+        # 1. Grab ONLY the very first mask layer (the "Master Mask") that has all our good pixels
+
+        
+            # 1. Process all detected bounding boxes
+            current_detections = []
+            for xyxy in detections.xyxy:
+                x_min, y_min, x_max, y_max = xyxy
+                dx = x_max - x_min
+                dy = y_max - y_min
+                x_center = (x_min + x_max) / 2 # Find the center of the pole
+                
+                pole_length_px = math.hypot(dx, dy) if dx > 10 else dy
+                visible_length_cm = pole_length_px * conversion_factor
+                snow_depth_cm = total_pole_cm - visible_length_cm
+                
+                current_detections.append({
+                    'x_center': x_center,
+                    'xyxy': xyxy,
+                    'snowdepth': snow_depth_cm,
+                    'pixellength': pole_length_px
+                })
+                
+            # ========================================================
+            # 2. MATCHING LOGIC (The Rolling Anchor System)
+            # ========================================================
+            assigned_poles = {}
+            
+            if not active_anchors and len(current_detections) > 0:
+                # First frame with poles: Initialize anchors from left-to-right
+                current_detections.sort(key=lambda d: d['x_center'])
+                for idx, det in enumerate(current_detections):
+                    pole_id = f"Pole{idx + 1}"
+                    active_anchors[pole_id] = det['x_center'] # Save Anchor!
+                    assigned_poles[pole_id] = det
+            else:
+                # Subsequent frames: Match new detections to existing anchors
+                current_detections.sort(key=lambda d: d['x_center'])
+                used_anchors = set()
+                
+                for det in current_detections:
+                    best_match_id = None
+                    min_dist = float('inf')
+                    
+                    # Check distances to all known anchors
+                    for p_id, anchor_x in active_anchors.items():
+                        if p_id in used_anchors:
+                            continue
+                        dist = abs(det['x_center'] - anchor_x)
+                        if dist < min_dist:
+                            min_dist = dist
+                            best_match_id = p_id
+                    
+                    # If the pole didn't jump insanely far, it's a match!
+                    if best_match_id is not None and min_dist < MAX_SHIFT_PX:
+                        assigned_poles[best_match_id] = det
+                        active_anchors[best_match_id] = det['x_center'] # UPDATE ANCHOR TO NEW POSITION!
+                        used_anchors.add(best_match_id)
+                    else:
+                        # If it shifted too far, or a brand new pole appeared, assign a new ID
+                        new_id = f"Pole{len(active_anchors) + 1}"
+                        active_anchors[new_id] = det['x_center']
+                        assigned_poles[new_id] = det
+                        used_anchors.add(new_id)
+
+            # ========================================================
+            # 3. Create the single row for this image
+            # ========================================================
+            row_data = {
                 'camera_id': camera_name,
                 'season': camera_season, 
                 'location': location_information, 
                 'image_directory': str(camera_image_path), 
                 'pole_length': total_pole_cm_input,
                 'filename': base_name,
-                'datetime':formatted_datetime,
-                'snowdepth': snow_depth_cm,
-                'snowdepth_mask': snow_depth_cm_mask,
-                'pixellength': pole_length_px,
-                'pixellength_mask': pole_length_px_mask,
+                'datetime': formatted_datetime,
                 'conversion': pixel_centimeter_conversion,
                 'notes': other_info,
-                'flag':flag
-            })
-        
+                'post_processing_notes': "",  
+                'flag': 0
+            }
+            
+            # Add the mapped poles into their correct CSV columns
+            for p_id, p_data in assigned_poles.items():
+                row_data[f'snowdepth_bbox_{p_id}'] = p_data['snowdepth']
+                row_data[f'pixellength_bbox_{p_id}'] = p_data['pixellength']
+                
+                if p_data['snowdepth'] is not None and p_data['snowdepth'] < -20:
+                    row_data['flag'] = 1
+
+            results_data.append(row_data)
+
+
+
         # Annotate
-        if i % 40 == 0: ## save every 20 for examples (fixed from "if i % 20:" which skips the 0th and multiples of 20)
+        if i % 1 == 0: ## save every 20 for examples (fixed from "if i % 20:" which skips the 0th and multiples of 20)
             h, w = image.shape[:2]
             thickness = sv.calculate_optimal_line_thickness(resolution_wh=(w, h))
             color_annotator = sv.ColorAnnotator(color=color)
@@ -625,21 +710,56 @@ if os.path.exists(best_model_path):
             annotated_image = color_annotator.annotate(scene=annotated_image, detections=detections)
             annotated_image = polygon_annotator.annotate(scene=annotated_image, detections=detections)
 
-            #######
-            if detections.mask is not None:
-                for mask in detections.mask:
-                    y_indices, x_indices = np.where(mask)
-                    if len(y_indices) > 0:
-                        top_idx = np.argmin(y_indices)
-                        bottom_idx = np.argmax(y_indices)          
-                        x_top, y_top = int(x_indices[top_idx]), int(y_indices[top_idx])
-                        x_bottom, y_bottom = int(x_indices[bottom_idx]), int(y_indices[bottom_idx])
-                        cv2.line(annotated_image, (x_top, y_top), (x_bottom, y_bottom), (98, 0, 255), thickness + 1)
-                        # # Draw little yellow dots at the exact top and bottom points for visual proof
-                        # cv2.circle(annotated_image, (x_top, y_top), thickness + 2, (0, 255, 255), -1) 
-                        # cv2.circle(annotated_image, (x_bottom, y_bottom), thickness + 2, (0, 255, 255), -1)
-            ######
+            # #######
+            # if detections.mask is not None:
+            #     for mask in detections.mask:
+            #         y_indices, x_indices = np.where(mask)
+            #         if len(y_indices) > 0:
+            #             top_idx = np.argmin(y_indices)
+            #             bottom_idx = np.argmax(y_indices)          
+            #             x_top, y_top = int(x_indices[top_idx]), int(y_indices[top_idx])
+            #             x_bottom, y_bottom = int(x_indices[bottom_idx]), int(y_indices[bottom_idx])
+            #             cv2.line(annotated_image, (x_top, y_top), (x_bottom, y_bottom), (98, 0, 255), thickness + 1)
+            # ######
             
+                   # Draw lines using the Master Mask and BBox Cookie Cutter
+            for p in assigned_poles.values():
+                x_min, y_min, x_max, y_max = p['xyxy']
+                dx = x_max - x_min
+                
+                # If perfectly vertical, draw straight down the middle
+                if dx <= 10:
+                    x_center = int((x_min + x_max) / 2)
+                    pt1 = (x_center, int(y_min))
+                    pt2 = (x_center, int(y_max))
+                else:
+                    if master_mask is not None:
+                        # COOKIE CUTTER: Look at the Master Mask, but ONLY inside this BBox
+                        y_ind, x_ind = np.where(master_mask)
+                        in_box = (x_ind >= int(x_min)) & (x_ind <= int(x_max)) & (y_ind >= int(y_min)) & (y_ind <= int(y_max))
+                        y_in = y_ind[in_box]
+                        x_in = x_ind[in_box]
+                        
+                        if len(y_in) > 0:
+                            x_top_mask = x_in[np.argmin(y_in)]
+                            x_bottom_mask = x_in[np.argmax(y_in)]
+                            
+                            # Tilt Check \ vs /
+                            if x_top_mask < x_bottom_mask:
+                                pt1 = (int(x_min), int(y_min)) # Top-Left
+                                pt2 = (int(x_max), int(y_max)) # Bottom-Right
+                            else:
+                                pt1 = (int(x_max), int(y_min)) # Top-Right
+                                pt2 = (int(x_min), int(y_max)) # Bottom-Left
+                        else:
+                            pt1 = (int(x_min), int(y_min))
+                            pt2 = (int(x_max), int(y_max))
+                    else:
+                        pt1 = (int(x_min), int(y_min))
+                        pt2 = (int(x_max), int(y_max))
+
+                cv2.line(annotated_image, pt1, pt2, (98, 0, 255), thickness + 1)
+
             # Convert OpenCV BGR image to PIL RGB Image for thumbnailing/saving
             annotated_image_rgb = cv2.cvtColor(annotated_image, cv2.COLOR_BGR2RGB)
             pil_img = Image.fromarray(annotated_image_rgb)
@@ -696,7 +816,7 @@ if os.path.exists(best_model_path):
     #     plt.tight_layout()
     #     plt.show()  # This will pause and display the pop-up plot to the user
 
-    if not df.empty and 'snowdepth' in df.columns:
+    if not df.empty and 'snowdepth_bbox_Pole1' in df.columns: ## defaults to first pole (makes sure there is at least one)
         print("\nGenerating Interactive Snow Depth summary plot...")
         
         # 1. Figure out if we should use datetime or index for the X-axis
@@ -711,14 +831,37 @@ if os.path.exists(best_model_path):
         # 2. Setup the plot
         fig, ax = plt.subplots(figsize=(10, 6))
         
-        # Plot Bounding Box based snow depth (note the comma after line_bbox)
-        line_bbox, = ax.plot(x_data, df['snowdepth'], marker='o', linestyle='-', color='b', label='Snow Depth (BBox)')
+        # # Plot Bounding Box based snow depth (note the comma after line_bbox)
+        # line_bbox, = ax.plot(x_data, df['snowdepth'], marker='o', linestyle='-', color='b', label='Snow Depth (BBox)')
         
-        # Plot Mask based snow depth if available
-        line_mask = None
-        if 'snowdepth_mask' in df.columns and not df['snowdepth_mask'].isna().all():
-            line_mask, = ax.plot(x_data, df['snowdepth_mask'], marker='x', linestyle='--', color='r', alpha=0.7, label='Snow Depth (Mask)')
-                
+        # # Plot Mask based snow depth if available
+        # line_mask = None
+        # if 'snowdepth_mask' in df.columns and not df['snowdepth_mask'].isna().all():
+        #     line_mask, = ax.plot(x_data, df['snowdepth_mask'], marker='x', linestyle='--', color='r', alpha=0.7, label='Snow Depth (Mask)')
+                # Plot Bounding Box based snow depth
+        line_bbox, = ax.plot(x_data, df['snowdepth_bbox'], marker='o', linestyle='-', color='b', label='Depth (BBox Overall)')
+        
+        # line_mask1 = None
+        # line_mask2 = None
+        
+        # # Plot Mask based snow depth for Pole 1 (Left Pole)
+        # if 'snowdepth_mask_Pole1' in df.columns and not df['snowdepth_mask_Pole1'].isna().all():
+        #     line_mask1, = ax.plot(x_data, df['snowdepth_mask_Pole1'], marker='x', linestyle='--', color='r', alpha=0.7, label='Depth (Left Pole)')
+            
+        # # Plot Mask based snow depth for Pole 2 (Right Pole)
+        # if 'snowdepth_mask_Pole2' in df.columns and not df['snowdepth_mask_Pole2'].isna().all():
+        #     line_mask2, = ax.plot(x_data, df['snowdepth_mask_Pole2'], marker='+', linestyle=':', color='g', alpha=0.7, label='Depth (Right Pole)')
+        
+        line_pole1 = None
+        line_pole2 = None
+        
+        if 'snowdepth_bbox_Pole1' in df.columns and not df['snowdepth_bbox_Pole1'].isna().all():
+            line_pole1, = ax.plot(x_data, df['snowdepth_bbox_Pole1'], marker='o', linestyle='-', color='b', label='Depth (First Pole or Left Pole)')
+            
+        if 'snowdepth_bbox_Pole2' in df.columns and not df['snowdepth_bbox_Pole2'].isna().all():
+            line_pole2, = ax.plot(x_data, df['snowdepth_bbox_Pole2'], marker='x', linestyle='--', color='r', alpha=0.7, label='Depth (Right Pole)')
+            
+
             # Updated Title to include instructions
         ax.set_title(f"Estimated Snow Depth over Time/Images - {camera_name}\n(Press 'Enter' to Save & Close)")
             
@@ -728,7 +871,10 @@ if os.path.exists(best_model_path):
             fig.autofmt_xdate() # Rotates the dates so they don't overlap
             
         # Format Y-axis
-        max_depth = df['snowdepth'].max()
+        #max_depth = df['snowdepth_bbox'].max()
+        max_1 = df['snowdepth_bbox_Pole1'].max() if 'snowdepth_bbox_Pole1' in df.columns else 0
+        max_2 = df['snowdepth_bbox_Pole2'].max() if 'snowdepth_bbox_Pole2' in df.columns else 0
+        max_depth = max(max_1, max_2)
         if pd.notna(max_depth): 
             ax.set_ylim(0, max_depth + 10) 
         ax.set_ylabel("Snow Depth (cm)")
@@ -766,27 +912,68 @@ if os.path.exists(best_model_path):
             text = f"Index: {df_idx}\nFile: {filename}\nDate: {dt_str}\n{method_name}: {depth:.2f} cm"
             annot.set_text(text)
 
+        # def hover(event):
+        #     vis = annot.get_visible()
+        #     if event.inaxes == ax:
+        #         # Check if mouse is over the BBox line
+        #         cont_bbox, ind_bbox = line_bbox.contains(event)
+        #         if cont_bbox:
+        #             update_annot(ind_bbox, line_bbox, "Depth (BBox)")
+        #             annot.set_visible(True)
+        #             fig.canvas.draw_idle()
+        #             return
+                
+        #         # # Check if mouse is over the Mask line
+        #         # if line_mask is not None:
+        #         #     cont_mask, ind_mask = line_mask.contains(event)
+        #         #     if cont_mask:
+        #         #         update_annot(ind_mask, line_mask, "Depth (Mask)")
+        #         #         annot.set_visible(True)
+        #         #         fig.canvas.draw_idle()
+        #         #         return
+
+        #                      # Check Pole 1
+        #         if line_mask1 is not None:
+        #             cont_mask1, ind_mask1 = line_mask1.contains(event)
+        #             if cont_mask1:
+        #                 update_annot(ind_mask1, line_mask1, "Depth (Left Pole)")
+        #                 annot.set_visible(True)
+        #                 fig.canvas.draw_idle()
+        #                 return
+                        
+        #         # Check Pole 2
+        #         if line_mask2 is not None:
+        #             cont_mask2, ind_mask2 = line_mask2.contains(event)
+        #             if cont_mask2:
+        #                 update_annot(ind_mask2, line_mask2, "Depth (Right Pole)")
+        #                 annot.set_visible(True)
+        #                 fig.canvas.draw_idle()
+        #                 return
+                
+        #         # Hide if not hovering over any line
+        #         if vis:
+        #             annot.set_visible(False)
+        #             fig.canvas.draw_idle()
+
         def hover(event):
             vis = annot.get_visible()
             if event.inaxes == ax:
-                # Check if mouse is over the BBox line
-                cont_bbox, ind_bbox = line_bbox.contains(event)
-                if cont_bbox:
-                    update_annot(ind_bbox, line_bbox, "Depth (BBox)")
-                    annot.set_visible(True)
-                    fig.canvas.draw_idle()
-                    return
-                
-                # Check if mouse is over the Mask line
-                if line_mask is not None:
-                    cont_mask, ind_mask = line_mask.contains(event)
-                    if cont_mask:
-                        update_annot(ind_mask, line_mask, "Depth (Mask)")
+                if line_pole1 is not None:
+                    cont1, ind1 = line_pole1.contains(event)
+                    if cont1:
+                        update_annot(ind1, line_pole1, "Depth (First Pole or Left Pole)")
+                        annot.set_visible(True)
+                        fig.canvas.draw_idle()
+                        return
+                        
+                if line_pole2 is not None:
+                    cont2, ind2 = line_pole2.contains(event)
+                    if cont2:
+                        update_annot(ind2, line_pole2, "Depth (Right Pole)")
                         annot.set_visible(True)
                         fig.canvas.draw_idle()
                         return
                 
-                # Hide if not hovering over any line
                 if vis:
                     annot.set_visible(False)
                     fig.canvas.draw_idle()
