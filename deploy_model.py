@@ -26,6 +26,8 @@ import re
 import torch 
 import gc
 
+torch.set_num_threads(4) 
+
 print("--- Snowpole Setup ---")
 '''
 We need to know two things related to the metadata 
