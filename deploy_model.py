@@ -21,10 +21,11 @@ import datetime
 from matplotlib.widgets import Button  # Added for the Reset button
 ## additional packages ## 
 #import plotly.express as px ## need to do conda install
-import IPython
+#import IPython
 import re
 import torch 
 import gc
+import json 
 
 torch.set_num_threads(2) 
 
@@ -371,6 +372,29 @@ if pixel_centimeter_conversion == 'NA':
         pixel_centimeter_conversion = 1.0 # fallback to prevent crash
     plt.close()
 ##############
+if saved_configs == "N":
+    config_dict = {
+        "camera_name": camera_name,
+        "camera_season": camera_season,
+        "camera_image_path": str(camera_image_path),
+        "pole_type": "Full Pole",
+        "total_pole_cm": total_pole_cm,
+        "pixel_centimeter_conversion": pixel_centimeter_conversion,
+        "ref_img_path_actual": ref_img_path_actual,
+        "other_info": other_info,
+        "location_information": location_information,
+        "base_output_dir": str(base_output_dir)
+    }
+    
+    # Create the config file path directly inside the camera's output directory
+    config_file_path = camera_out_dir / 'snowpole_config.json'
+    
+    with open(config_file_path, 'w') as f:
+        json.dump(config_dict, f, indent=4)
+        
+    print("-" * 20)
+    print(f"Configuration saved to '{config_file_path}'!")
+    print("-" * 20)
 
 
 ################# now run the model #############
@@ -635,7 +659,7 @@ if os.path.exists(best_model_path):
             results_data.append(row_data)
 
         # Annotate
-        if i % 1 == 0: ## save every 20 for examples (fixed from "if i % 20:" which skips the 0th and multiples of 20)
+        if i % 40 == 0: ## save every 20 for examples (fixed from "if i % 20:" which skips the 0th and multiples of 20)
             h, w = image.shape[:2]
             thickness = sv.calculate_optimal_line_thickness(resolution_wh=(w, h))
             color_annotator = sv.ColorAnnotator(color=color)
