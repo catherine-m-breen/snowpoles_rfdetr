@@ -546,69 +546,6 @@ if os.path.exists(best_model_path):
             #IPython.embed()
             detections = model.predict(image)
             master_mask = detections.mask[0] if detections.mask is not None and len(detections.mask) > 0 else None
-        
-        # 1. Safety check: create a list of 'None' if masks are missing
-        #masks = detections.mask if detections.mask is not None else [None] * len(detections.xyxy)
-        # 2. Correctly unpack the index (j) and the zipped items (xyxy, mask)
-        # for j, (xyxy, mask) in enumerate(zip(detections.xyxy, masks)):
-        #     x_min, y_min, x_max, y_max = xyxy
-        #     # Calculate vertical and horizontal differences
-        #     dy = y_max - y_min
-        #     dx = x_max - x_min
-        #     # If the pole is tilted (bounding box is wider than 10 pixels)
-        #     # use the hypotenuse 
-        #     if dx > 10:
-        #         pole_length_px = math.hypot(dx, dy) 
-        #     else:
-        #         pole_length_px = dy
-
-        #     visible_length_cm = pole_length_px * conversion_factor
-        #     snow_depth_cm = total_pole_cm - visible_length_cm
-        #     snow_depth_cm_mask = None
-        #     pole_length_px_mask = None
-            
-        #     if mask is not None:
-        #         y_indices, x_indices = np.where(mask)
-        #         if len(y_indices) > 0:  # Only proceed if the mask isn't empty
-        #             top_idx = np.argmin(y_indices)
-        #             x_top, y_top = x_indices[top_idx], y_indices[top_idx]
-                    
-        #             bottom_idx = np.argmax(y_indices)
-        #             x_bottom, y_bottom = x_indices[bottom_idx], y_indices[bottom_idx]
-                    
-        #             dx_mask = x_bottom - x_top
-        #             dy_mask = y_bottom - y_top
-                    
-        #             pole_length_px_mask = math.hypot(dx_mask, dy_mask)
-        #             visible_length_cm_mask = pole_length_px_mask * conversion_factor
-        #             snow_depth_cm_mask = total_pole_cm - visible_length_cm_mask
-        #         flag = 0
-        #         # Check if either value exists AND is less than -20
-        #         if (snow_depth_cm is not None and snow_depth_cm < -20) or \
-        #         (snow_depth_cm_mask is not None and snow_depth_cm_mask < -20):
-        #             flag = 1
-        #     ####################
-
-        #     results_data.append({
-        #         'camera_id': camera_name,
-        #         'season': camera_season, 
-        #         'location': location_information, 
-        #         'image_directory': str(camera_image_path), 
-        #         'pole_length': total_pole_cm_input,
-        #         'filename': base_name,
-        #         'datetime':formatted_datetime,
-        #         'snowdepth': snow_depth_cm,
-        #         'snowdepth_mask': snow_depth_cm_mask,
-        #         'pixellength': pole_length_px,
-        #         'pixellength_mask': pole_length_px_mask,
-        #         'conversion': pixel_centimeter_conversion,
-        #         'notes': other_info,
-        #         'flag':flag
-        #     })
-        # 2. Correctly unpack the index (j) and the zipped items (xyxy, mask)
-        # 1. Grab ONLY the very first mask layer (the "Master Mask") that has all our good pixels
-
-        
             # 1. Process all detected bounding boxes
             current_detections = []
             for xyxy in detections.xyxy:
@@ -696,8 +633,6 @@ if os.path.exists(best_model_path):
                     row_data['flag'] = 1
 
             results_data.append(row_data)
-
-
 
         # Annotate
         if i % 1 == 0: ## save every 20 for examples (fixed from "if i % 20:" which skips the 0th and multiples of 20)
@@ -839,7 +774,7 @@ if os.path.exists(best_model_path):
         # if 'snowdepth_mask' in df.columns and not df['snowdepth_mask'].isna().all():
         #     line_mask, = ax.plot(x_data, df['snowdepth_mask'], marker='x', linestyle='--', color='r', alpha=0.7, label='Snow Depth (Mask)')
                 # Plot Bounding Box based snow depth
-        line_bbox, = ax.plot(x_data, df['snowdepth_bbox'], marker='o', linestyle='-', color='b', label='Depth (BBox Overall)')
+        #line_bbox, = ax.plot(x_data, df['snowdepth_bbox'], marker='o', linestyle='-', color='b', label='Depth (BBox Overall)')
         
         # line_mask1 = None
         # line_mask2 = None
