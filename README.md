@@ -168,6 +168,7 @@ Ensure your file path is exactly correct, contains no typos, and is <b>not</b> w
 - TypeError: ufunc 'divide' not supported...</b></summary> <blockquote>Ensure you are entering a numeric value (like <code>304.8</code>) when asked for the pole length. If you accidentally type text (like "2016-2017"), the math calculations will fail!</blockquote> </details> <details> <summary><b> 
 - Error: Model not found at [path]</b></summary> <blockquote>Check that your <code>checkpoint_best_total.pth</code> file actually exists at the exact path defined in the <code>best_model_path</code> variable inside the script.</blockquote> </details>
 - NameError: name 'ref_img_path' is not defined </b></summary> <blockquote> This error happens when the script cannot find your images to set the reference image, usually because the folder path you entered has a hidden mistake. Double-check that there are no leading spaces when you paste the image directory path into the terminal.</blockquote> </details> 
+- Model Crashing / taking a long time to run: We've found that the newer computers, the code can process about a 1 second per image, which for 600 images is about 6-10 minutes. However for older machines, we noticed that it can take up to 6 seconds per image, which results in about 1hr for 600 images. For these machines, make sure to have it plugged in (if laptop) and shutdown any other memory expensive apps like Chrome, Firefox, and/or Safari. 
 
 
 ##  References
