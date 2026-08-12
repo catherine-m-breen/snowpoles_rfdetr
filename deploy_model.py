@@ -18,7 +18,8 @@ from pathlib import Path
 import pandas as pd
 import tqdm
 import datetime
-from matplotlib.widgets import Button  # Added for the Reset button
+from matplotlib.widgets import Button, RectangleSelector# Added for the Reset button
+#from matplotlib.widgets import Button, RectangleSelector 
 ## additional packages ## 
 #import plotly.express as px ## need to do conda install
 #import IPython
@@ -72,6 +73,10 @@ if saved_configs == 'Y':
     ref_img_path_actual = 9 
     other_info = 'First 9 photos are foggy'
     location_information ='(39.032, -108.216)'
+
+    # new crop feature in configs (in case picture is super noisy/ lots of poles and they don't tilt)
+    apply_crop = False
+    crop_coords = None
     
     # Updated to create nested output structure
     base_output_dir = Path("outputs")
@@ -119,7 +124,7 @@ if saved_configs == "N":
         ref_img_path_actual = int(input("Enter the image number to use as reference (e.g., 9 for the 9th image): "))
     else:
         ref_img_path_actual = 1
-    
+
     print("-" * 20)
     other_info = input("Is there any other information to store for this camera? For example, information related to malfunction etc. \n Put NA if nothing: ")
     location_information = input("Enter location information (long, lat) format, if don't know just put NA: ")
@@ -133,6 +138,72 @@ if saved_configs == "N":
     camera_out_dir = base_output_dir / camera_name
     csv_dir = camera_out_dir / 'csv'
     viz_dir = camera_out_dir / 'sample_outputs'
+
+    ########### new crop feature ###########
+    ##### warning the model should track the pole, but if it's really not working you can crop the image (as long as you know the pole won't tilt a ton)
+    ############# OPEN CAMERA FOLDER TO FIND REFERENCE IMAGE ##########################
+    images = sorted(glob.glob(os.path.join(Path(camera_image_path), '*.[jJ][pP]*[gG]')))
+    if len(images) == 0:
+        print(f"WARNING: No images found in {camera_image_path}! Check that the path is correct.")
+        exit()
+    else:
+        # Set the exact path to the reference image so later code can use it
+        ref_img_path = images[ref_img_path_actual - 1]
+    ###################################################################################
+
+    if saved_configs == "N":
+        # --- NEW: BOUNDING BOX / CROP SELECTION ---
+        crop_state = {'coords': None}
+        apply_crop_input = input("\nDo you want to apply a bounding box (crop) to the images? (Y/N): ").strip().upper()
+        apply_crop = (apply_crop_input == 'Y')
+        
+        if apply_crop:
+            print("\n*** CROP SELECTION ***")
+            print("A window will open. Click and drag to draw a bounding box around the area of interest.")
+            print("You can adjust the corners. Press 'Enter' when you are satisfied with the crop.")
+            
+            ref_image_cv_crop = cv2.imread(str(ref_img_path))
+            ref_image_rgb_crop = cv2.cvtColor(ref_image_cv_crop, cv2.COLOR_BGR2RGB)
+            
+            fig_crop, ax_crop = plt.subplots(figsize=(10, 8))
+            ax_crop.imshow(ref_image_rgb_crop)
+            ax_crop.set_title("Draw Bounding Box (Click & Drag)\nPress 'Enter' when done")
+            
+            def line_select_callback(eclick, erelease):
+                x1, y1 = eclick.xdata, eclick.ydata
+                x2, y2 = erelease.xdata, erelease.ydata
+                # Ensure coordinates are within image bounds and integers
+                h, w = ref_image_rgb_crop.shape[:2]
+                xmin = max(0, int(min(x1, x2)))
+                ymin = max(0, int(min(y1, y2)))
+                xmax = min(w, int(max(x1, x2)))
+                ymax = min(h, int(max(y1, y2)))
+                crop_state['coords'] = (xmin, ymin, xmax, ymax)
+            
+            rs = RectangleSelector(ax_crop, line_select_callback,
+                                useblit=True,
+                                button=[1],  # Left mouse button
+                                minspanx=5, minspany=5,
+                                spancoords='pixels',
+                                interactive=True)
+                                
+            def on_key_crop(event):
+                if event.key == 'enter':
+                    plt.close(fig_crop)
+                    
+            fig_crop.canvas.mpl_connect('key_press_event', on_key_crop)
+            plt.show()
+            
+            crop_coords = crop_state['coords']
+            if crop_coords is None:
+                print("Warning: No crop selected. Proceeding without crop.")
+                apply_crop = False
+            else:
+                print(f"Crop selected (xmin, ymin, xmax, ymax): {crop_coords}")
+        else:
+            crop_coords = None
+        # ------------------------------------------
+
     
     print("-" * 20)
     print("Configurations for Script")
@@ -146,6 +217,7 @@ if saved_configs == "N":
     print(f"Other Info/Notes:            {other_info}")
     print(f"Base Output Directory:       {base_output_dir}")
     print(f"Camera Output Directory:     {camera_out_dir}")
+    print(f"Apply Crop:                  {apply_crop}")
     print("-" * 20)
 
 
@@ -383,7 +455,9 @@ if saved_configs == "N":
         "ref_img_path_actual": ref_img_path_actual,
         "other_info": other_info,
         "location_information": location_information,
-        "base_output_dir": str(base_output_dir)
+        "base_output_dir": str(base_output_dir),
+        "apply_crop": apply_crop,
+        "crop_coords": crop_coords
     }
     
     # Create the config file path directly inside the camera's output directory
@@ -421,7 +495,13 @@ if os.path.exists(best_model_path):
     ref_image = cv2.imread(str(ref_img_path))
     if ref_image is None:
         raise ValueError("Could not read the reference image. Please check the path.")
-        
+
+        # Apply Crop to Reference Image for Model Prediction
+    if apply_crop and crop_coords is not None:
+        xmin, ymin, xmax, ymax = crop_coords
+        ref_image = ref_image[ymin:ymax, xmin:xmax]
+
+
     ref_detections = model.predict(ref_image)
     
     if len(ref_detections.xyxy) == 0:
@@ -535,6 +615,11 @@ if os.path.exists(best_model_path):
     for i, img_path in tqdm.tqdm(enumerate(sample_images), total=len(sample_images)):
         base_name = os.path.basename(img_path)
         image = cv2.imread(img_path)
+
+                # APPLY CROP IN INFERENCE LOOP
+        if apply_crop and crop_coords is not None:
+            xmin, ymin, xmax, ymax = crop_coords
+            image = image[ymin:ymax, xmin:xmax]
 
         formatted_datetime = None
         try: 
@@ -659,7 +744,7 @@ if os.path.exists(best_model_path):
             results_data.append(row_data)
 
         # Annotate
-        if i % 40 == 0: ## save every 20 for examples (fixed from "if i % 20:" which skips the 0th and multiples of 20)
+        if i % 1 == 0: ## save every 20 for examples (fixed from "if i % 20:" which skips the 0th and multiples of 20)
             h, w = image.shape[:2]
             thickness = sv.calculate_optimal_line_thickness(resolution_wh=(w, h))
             color_annotator = sv.ColorAnnotator(color=color)
