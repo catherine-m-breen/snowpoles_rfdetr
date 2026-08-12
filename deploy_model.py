@@ -831,7 +831,7 @@ if os.path.exists(best_model_path):
             results_data.append(row_data)
 
         # Annotate
-        if i % 1 == 0: ## save every 20 for examples (fixed from "if i % 20:" which skips the 0th and multiples of 20)
+        if i % 40 == 0: ## save every 20 for examples (fixed from "if i % 20:" which skips the 0th and multiples of 20)
             h, w = image.shape[:2]
             thickness = sv.calculate_optimal_line_thickness(resolution_wh=(w, h))
             color_annotator = sv.ColorAnnotator(color=color)
@@ -987,10 +987,10 @@ if os.path.exists(best_model_path):
         line_pole2 = None
         
         if 'snowdepth_bbox_Pole1' in df.columns and not df['snowdepth_bbox_Pole1'].isna().all():
-            line_pole1, = ax.plot(x_data, df['snowdepth_bbox_Pole1'], marker='o', linestyle='-', color='b', label='Depth (First Pole or Left Pole)')
+            line_pole1, = ax.plot(x_data, df['snowdepth_bbox_Pole1'], marker='o', linestyle='-', color='b', label='Depth (Main Pole)')
             
         if 'snowdepth_bbox_Pole2' in df.columns and not df['snowdepth_bbox_Pole2'].isna().all():
-            line_pole2, = ax.plot(x_data, df['snowdepth_bbox_Pole2'], marker='x', linestyle='--', color='r', alpha=0.7, label='Depth (Right Pole)')
+            line_pole2, = ax.plot(x_data, df['snowdepth_bbox_Pole2'], marker='x', linestyle='--', color='r', alpha=0.7, label='Depth (First Additional Pole Starting from Left)')
             
 
             # Updated Title to include instructions
@@ -1007,7 +1007,7 @@ if os.path.exists(best_model_path):
         max_2 = df['snowdepth_bbox_Pole2'].max() if 'snowdepth_bbox_Pole2' in df.columns else 0
         max_depth = max(max_1, max_2)
         if pd.notna(max_depth): 
-            ax.set_ylim(0, max_depth + 10) 
+            ax.set_ylim(-10, max_depth + 10) 
         ax.set_ylabel("Snow Depth (cm)")
         
         ax.grid(True, linestyle='--', alpha=0.7)
