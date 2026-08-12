@@ -26,6 +26,9 @@ This script processes a time series of timelapse camera images to automatically 
 <p>- Automated calibration: Click the top and bottom of a snow-free image to automatically calculate the pixel-to-centimeter scale.</p> 
 <p>- Snow Depth csv: Outputs a clean Pandas dataframe (.csv) with snow depth in centimeters.</p> 
 <p>- Example photos: Automatically saves bounding box visualizations for a subset of images so you can verify the model is working correctly.</p> 
+<p>!New! Tracks tilt: This leverages a rolling anchor of the pole and identifies the angle of tilt and records it, allowing the user to have a sense of whether the pole stayed upright or tilted over the winter season.</p> 
+<p>!New! Tracks multiple poles: The model will detect ALL poles in an image, at the beginning of the script you will need select which pole is your main pole (pole 1). As of now, the script will need to be re-run for multiple poles.  </p> 
+
 
 ## Prerequisites & Installation 
  

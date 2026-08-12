@@ -615,7 +615,7 @@ if os.path.exists(best_model_path):
 
 
     active_anchors = {} # This will store the expected X-coordinate of each pole
-    MAX_SHIFT_PX = 1500 # The max pixels a pole can move between frames before it's considered a "new" pole
+    MAX_SHIFT_PX = 1000 # The max pixels a pole can move between frames before it's considered a "new" pole
     
     for i, img_path in tqdm.tqdm(enumerate(sample_images), total=len(sample_images)):
         base_name = os.path.basename(img_path)
@@ -671,12 +671,32 @@ if os.path.exists(best_model_path):
                 pole_length_px = math.hypot(dx, dy) if dx > 10 else dy
                 visible_length_cm = pole_length_px * conversion_factor
                 snow_depth_cm = total_pole_cm - visible_length_cm
+
+                # --- NEW SAFE TILT CALCULATION ---
+                ## could add the left tilt right tilt math to consoldate 
+                tilt_degrees = 0.0 # Default to 0 (perfectly vertical)
+                if dx > 10 and master_mask is not None:
+                    # Look at mask inside this bbox
+                    y_ind, x_ind = np.where(master_mask)
+                    in_box = (x_ind >= int(x_min)) & (x_ind <= int(x_max)) & (y_ind >= int(y_min)) & (y_ind <= int(y_max))
+                    y_in = y_ind[in_box]
+                    x_in = x_ind[in_box]
+                    
+                    if len(y_in) > 0:
+                        x_top_mask = x_in[np.argmin(y_in)]
+                        x_bottom_mask = x_in[np.argmax(y_in)]
+                        
+                        # Calculate difference in X (dy is already y_max - y_min)
+                        dx_tilt = x_bottom_mask - x_top_mask 
+                        tilt_radians = math.atan2(dx_tilt, dy)
+                        tilt_degrees = math.degrees(tilt_radians)
                 
                 current_detections.append({
                     'x_center': x_center,
                     'xyxy': xyxy,
                     'snowdepth': snow_depth_cm,
-                    'pixellength': pole_length_px
+                    'pixellength': pole_length_px,
+                    'tilt_degrees': tilt_degrees
                 })
                 
             # ========================================================
@@ -686,11 +706,39 @@ if os.path.exists(best_model_path):
             
             if not active_anchors and len(current_detections) > 0:
                 # First frame with poles: Initialize anchors from left-to-right
-                current_detections.sort(key=lambda d: d['x_center'])
-                for idx, det in enumerate(current_detections):
-                    pole_id = f"Pole{idx + 1}"
-                    active_anchors[pole_id] = det['x_center'] # Save Anchor!
-                    assigned_poles[pole_id] = det
+                # current_detections.sort(key=lambda d: d['x_center'])
+                # for idx, det in enumerate(current_detections):
+                #     pole_id = f"Pole{idx + 1}"
+                #     active_anchors[pole_id] = det['x_center'] # Save Anchor!
+                #     assigned_poles[pole_id] = det
+
+                             # If we have the user's click coordinate, use it to find the Main Pole (Pole 1)
+                if 'clicked_x_center' in locals() and clicked_x_center is not None:
+                    # 1. Sort detections by how close they are to the user's calibration click
+                    current_detections.sort(key=lambda d: abs(d['x_center'] - clicked_x_center))
+                    
+                    # 2. Pop the closest detection and force it to be "Pole1"
+                    main_det = current_detections.pop(0)
+                    active_anchors["Pole1"] = main_det['x_center']
+                    assigned_poles["Pole1"] = main_det
+                    
+                    # 3. Sort the remaining detections Left-to-Right
+                    current_detections.sort(key=lambda d: d['x_center'])
+                    for idx, det in enumerate(current_detections):
+                        pole_id = f"Pole{idx + 2}" # Start numbering at 2
+                        active_anchors[pole_id] = det['x_center']
+                        assigned_poles[pole_id] = det
+                        
+                    # Put main det back in the list so it gets saved to the CSV properly
+                    current_detections.append(main_det)
+                    
+                else:
+                    # Fallback (If you used presaved configs and didn't click)
+                    current_detections.sort(key=lambda d: d['x_center'])
+                    for idx, det in enumerate(current_detections):
+                        pole_id = f"Pole{idx + 1}"
+                        active_anchors[pole_id] = det['x_center']
+                        assigned_poles[pole_id] = det
             else:
                 ## old anchor set-up doesn't account for the fact that sometimes false positives can come into view
                 # # Subsequent frames: Match new detections to existing anchors
@@ -755,6 +803,8 @@ if os.path.exists(best_model_path):
             # ========================================================
             # 3. Create the single row for this image
             # ========================================================
+            
+            
             row_data = {
                 'camera_id': camera_name,
                 'season': camera_season, 
@@ -773,7 +823,8 @@ if os.path.exists(best_model_path):
             for p_id, p_data in assigned_poles.items():
                 row_data[f'snowdepth_bbox_{p_id}'] = p_data['snowdepth']
                 row_data[f'pixellength_bbox_{p_id}'] = p_data['pixellength']
-                
+                row_data[f'tilt_degrees_{p_id}'] = p_data['tilt_degrees'] # adding tilt tracker 
+
                 if p_data['snowdepth'] is not None and p_data['snowdepth'] < -20:
                     row_data['flag'] = 1
 
@@ -1079,3 +1130,59 @@ if os.path.exists(best_model_path):
     print(f"\nProcessing for camera {camera_name} complete!\n")
 # else:
     #rint(f"Error: Model not found at {best_model_path}")
+
+
+
+
+    #### TILT math ###
+
+    # # 1. Process all detected bounding boxes
+    #         current_detections = []
+    #         for xyxy in detections.xyxy:
+    #             x_min, y_min, x_max, y_max = xyxy
+    #             dx = x_max - x_min
+    #             dy = y_max - y_min
+    #             x_center = (x_min + x_max) / 2
+                
+    #             pole_length_px = math.hypot(dx, dy) if dx > 10 else dy
+    #             visible_length_cm = pole_length_px * conversion_factor
+    #             snow_depth_cm = total_pole_cm - visible_length_cm
+
+    #             # --- CONSOLIDATED TILT & DRAWING MATH ---
+    #             tilt_degrees = 0.0 
+    #             # Default draw points (straight down the middle)
+    #             pt1 = (int(x_center), int(y_min))
+    #             pt2 = (int(x_center), int(y_max))
+                
+    #             if dx > 10 and master_mask is not None:
+    #                 y_ind, x_ind = np.where(master_mask)
+    #                 in_box = (x_ind >= int(x_min)) & (x_ind <= int(x_max)) & (y_ind >= int(y_min)) & (y_ind <= int(y_max))
+    #                 y_in = y_ind[in_box]
+    #                 x_in = x_ind[in_box]
+                    
+    #                 if len(y_in) > 0:
+    #                     x_top_mask = x_in[np.argmin(y_in)]
+    #                     x_bottom_mask = x_in[np.argmax(y_in)]
+                        
+    #                     # 1. Calculate Tilt
+    #                     dx_tilt = x_bottom_mask - x_top_mask 
+    #                     tilt_radians = math.atan2(dx_tilt, dy)
+    #                     tilt_degrees = math.degrees(tilt_radians)
+
+    #                     # 2. Determine Drawing Points (Lean Direction)
+    #                     if x_top_mask < x_bottom_mask:
+    #                         pt1 = (int(x_min), int(y_min)) # Top-Left
+    #                         pt2 = (int(x_max), int(y_max)) # Bottom-Right
+    #                     else:
+    #                         pt1 = (int(x_max), int(y_min)) # Top-Right
+    #                         pt2 = (int(x_min), int(y_max)) # Bottom-Left
+                
+    #             current_detections.append({
+    #                 'x_center': x_center,
+    #                 'xyxy': xyxy,
+    #                 'snowdepth': snow_depth_cm,
+    #                 'pixellength': pole_length_px,
+    #                 'tilt_degrees': tilt_degrees,
+    #                 'draw_pt1': pt1,    # <--- Save drawing points
+    #                 'draw_pt2': pt2     # <--- Save drawing points
+    #             })
