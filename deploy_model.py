@@ -77,6 +77,9 @@ if saved_configs == 'Y':
     # new crop feature in configs (in case picture is super noisy/ lots of poles and they don't tilt)
     apply_crop = False
     crop_coords = None
+
+    ##### clicked center for anchor point #####
+    clicked_x_center = None
     
     # Updated to create nested output structure
     base_output_dir = Path("outputs")
@@ -432,6 +435,8 @@ if pixel_centimeter_conversion == 'NA':
         
         # Calculate euclidean distance in pixels
         pixel_distance = math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+
+        clicked_x_center = (x1 + x2) / 2.0 ### save this value so you know what the clicked center is 
         
         pixel_centimeter_conversion =  calibration_target / pixel_distance
         print("-" * 20)
@@ -687,35 +692,66 @@ if os.path.exists(best_model_path):
                     active_anchors[pole_id] = det['x_center'] # Save Anchor!
                     assigned_poles[pole_id] = det
             else:
-                # Subsequent frames: Match new detections to existing anchors
-                current_detections.sort(key=lambda d: d['x_center'])
+                ## old anchor set-up doesn't account for the fact that sometimes false positives can come into view
+                # # Subsequent frames: Match new detections to existing anchors
+                # current_detections.sort(key=lambda d: d['x_center'])
+                # used_anchors = set()
+                
+                # for det in current_detections:
+                #     best_match_id = None
+                #     min_dist = float('inf')
+                    
+                #     # Check distances to all known anchors
+                #     for p_id, anchor_x in active_anchors.items():
+                #         if p_id in used_anchors:
+                #             continue
+                #         dist = abs(det['x_center'] - anchor_x)
+                #         if dist < min_dist:
+                #             min_dist = dist
+                #             best_match_id = p_id
+                    
+                #     # If the pole didn't jump insanely far, it's a match!
+                #     if best_match_id is not None and min_dist < MAX_SHIFT_PX:
+                #         assigned_poles[best_match_id] = det
+                #         active_anchors[best_match_id] = det['x_center'] # UPDATE ANCHOR TO NEW POSITION!
+                #         used_anchors.add(best_match_id)
+                #     else:
+                #         # If it shifted too far, or a brand new pole appeared, assign a new ID
+                #         new_id = f"Pole{len(active_anchors) + 1}"
+                #         active_anchors[new_id] = det['x_center']
+                #         assigned_poles[new_id] = det
+                #         used_anchors.add(new_id)
+                                # Subsequent frames: Global Nearest Neighbor matching
+
+                # 1. Calculate distance from every detection to every known anchor
+                matches = []
+                for det_idx, det in enumerate(current_detections):
+                    for p_id, anchor_x in active_anchors.items():
+                        dist = abs(det['x_center'] - anchor_x)
+                        if dist < MAX_SHIFT_PX:  # (Make sure MAX_SHIFT_PX is set to ~100)
+                            matches.append((dist, det_idx, p_id))
+                
+                # 2. Sort all possible matches by distance (CLOSEST FIRST)
+                matches.sort(key=lambda x: x[0])
+                
+                used_det_idxs = set()
                 used_anchors = set()
                 
-                for det in current_detections:
-                    best_match_id = None
-                    min_dist = float('inf')
-                    
-                    # Check distances to all known anchors
-                    for p_id, anchor_x in active_anchors.items():
-                        if p_id in used_anchors:
-                            continue
-                        dist = abs(det['x_center'] - anchor_x)
-                        if dist < min_dist:
-                            min_dist = dist
-                            best_match_id = p_id
-                    
-                    # If the pole didn't jump insanely far, it's a match!
-                    if best_match_id is not None and min_dist < MAX_SHIFT_PX:
-                        assigned_poles[best_match_id] = det
-                        active_anchors[best_match_id] = det['x_center'] # UPDATE ANCHOR TO NEW POSITION!
-                        used_anchors.add(best_match_id)
-                    else:
-                        # If it shifted too far, or a brand new pole appeared, assign a new ID
+                # 3. Assign the most obvious/closest poles first
+                for dist, det_idx, p_id in matches:
+                    # If neither the detection nor the anchor have been used yet, assign them!
+                    if det_idx not in used_det_idxs and p_id not in used_anchors:
+                        assigned_poles[p_id] = current_detections[det_idx]
+                        active_anchors[p_id] = current_detections[det_idx]['x_center'] # UPDATE ANCHOR
+                        used_det_idxs.add(det_idx)
+                        used_anchors.add(p_id)
+                
+                # 4. Handle unmatched detections (brand new poles or false positives)
+                for det_idx, det in enumerate(current_detections):
+                    if det_idx not in used_det_idxs:
                         new_id = f"Pole{len(active_anchors) + 1}"
                         active_anchors[new_id] = det['x_center']
                         assigned_poles[new_id] = det
-                        used_anchors.add(new_id)
-
             # ========================================================
             # 3. Create the single row for this image
             # ========================================================
