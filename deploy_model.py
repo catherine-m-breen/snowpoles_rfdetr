@@ -1013,6 +1013,11 @@ if os.path.exists(best_model_path):
         ax.grid(True, linestyle='--', alpha=0.7)
         ax.legend()
 
+        ### save plot ###
+        save_path = os.path.join(camera_out_dir, f"{camera_name}_summary_plot.png")
+        fig.savefig(save_path, dpi=300, bbox_inches='tight')
+        print(f"\n[+] Summary plot saved to: {save_path}")
+
         # 3. --- Interactive Hover Tooltip Setup ---
         # Create a hidden annotation box
         annot = ax.annotate("", xy=(0,0), xytext=(15,15), textcoords="offset points",
@@ -1113,9 +1118,6 @@ if os.path.exists(best_model_path):
         def on_key_press(event):
             if event.key == 'enter':
                 # Save the figure to the camera output directory
-                save_path = os.path.join(camera_out_dir, f"{camera_name}_summary_plot.png")
-                fig.savefig(save_path, dpi=300, bbox_inches='tight')
-                print(f"\n[+] Summary plot saved to: {save_path}")
                 plt.close(fig) ### this should shutdown the plot
 
         # Connect the functions to the figure
