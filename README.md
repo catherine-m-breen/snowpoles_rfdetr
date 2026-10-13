@@ -115,7 +115,7 @@ python deploy_model.py
 
 *The Configuration Set-Up*
 
-Upon running, the script will ask if you want to use presaved configurations (in terminal!) Most of the time you will press <kbd>N</kbd> (First Time / Interactive Mode), because you are running the code on a camera folder for the first time to do processing. Pressing <kbd>Y</kbd> is the advanced mode and would be for use cases where someone wants to fiddle with the "saved_configs" variable at the top of the script so they don't have to enter in the information interactively every time (would require knowing the information in advance). However, again, most users will use <kbd>N</kbd> (First Time / Interactive Mode)! 
+Upon running, the script will ask if you want to use presaved configurations (in terminal!) Most of the time you will press <kbd>N</kbd> (First Time / Interactive Mode), because you are running the code on a camera folder for the first time to do processing. Pressing <kbd>Y</kbd> is the advanced mode and would be for use cases where someone wants to rerun the code on the same camera. After the first run, you can hit <kbd>Y</kbd>, and it pulls the config file, saved as {camera_name}_config.json so that you don't have to enter in the information interactively every time. However, again, most users will use <kbd>N</kbd> (First Time / Interactive Mode)! 
 
 If you type <kbd>N</kbd> (First Time / Interactive Mode), you will be prompted to enter:
 

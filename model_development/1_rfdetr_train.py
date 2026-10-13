@@ -1,34 +1,17 @@
 '''
 This is a backup copy for what is running on slurm 
 57413408
+
+Thhis one is more robust as of September 15 2026
+
 '''
+
+
 
 import numpy as np
 import supervision as sv
 import torch
 from PIL import Image
-
-#from rfdetr import RFDETRMedium, RFDETRSegSmall, RFDETRSegMedium, RFDETRKeypointPreview, RFDETRSegLarge
-#from rfdetr.util.coco_classes import COCO_CLASSES
-
-
-## paths
-# cmbreen@discover33:/discover/nobackup/cmbreen/rfdetr_snow> ls
-# dataset_rfd_detr  rf-detr-keypoint-preview-xlarge.pth  rf-detr-seg-medium.pt
-
-#dataset = '/discover/nobackup/cmbreen/rfdetr_snow/dataset_rfd_detr'
-#model_path = '/discover/nobackup/cmbreen/rfdetr_snow/rf-detr-seg-medium.pt'
-#outputs = '/discover/nobackup/cmbreen/rfdetr_snow/outputs'
-#exp_name = 'SegMedium_bs8_gas2_e200'
-
-#model = RFDETRSegMedium(resolution=624)
-#model.train(dataset_dir=dataset.location, epochs=200, batch_size=8, grad_accum_steps=2)
-
-# viz every 10 epochs on a 5 examples; same 5 examples everytime 
-# add in early stopping 
-# plot the train adn val loss and save
-# save the model checkpoint 
-
 import torch
 import os
 import cv2

@@ -22,7 +22,7 @@ from matplotlib.widgets import Button, RectangleSelector# Added for the Reset bu
 #from matplotlib.widgets import Button, RectangleSelector 
 ## additional packages ## 
 #import plotly.express as px ## need to do conda install
-#import IPython
+import IPython
 import re
 import torch 
 import gc
@@ -60,45 +60,99 @@ We need to know two things related to the metadata
 '''
 
 
-saved_configs = input('Do you want to run with presaved configurations? Type "Y" if you have updated the code, type "N" if you are running this for the first time: ').strip().upper()
+saved_configs = input('Do you want to run with presaved configurations? Type "Y" if you have run the code for this camera and have a config file ready, type "N" if you are running this for the first time: ').strip().upper()
+
+# if saved_configs == 'Y': 
+#     camera_name = 'TLS_N4W'
+#     camera_season = '2016-2017'
+#     #camera_image_path = '/Volumes/MyBook/poles_dataset/native_res_snex17/TLS-N4W' # Example Windows path
+#     camera_image_path = '/Volumes/MyBook/snowpoles_dataset_master/raw_images/SnEx_Raleigh_2016-17/TLS-A1N'
+#     pole_type = 'Full Pole'
+#     total_pole_cm = 304.8 
+#     pixel_centimeter_conversion = 0.264 
+#     ref_img_path_actual = 9 
+#     other_info = 'First 9 photos are foggy'
+#     location_information ='(39.032, -108.216)'
+
+#     # new crop feature in configs (in case picture is super noisy/ lots of poles and they don't tilt)
+#     apply_crop = False
+#     crop_coords = None
+
+#     ##### clicked center for anchor point #####
+#     clicked_x_center = None
+    
+#     # Updated to create nested output structure
+#     base_output_dir = Path("outputs")
+#     camera_out_dir = base_output_dir / camera_name
+#     csv_dir = camera_out_dir / 'csv'
+#     viz_dir = camera_out_dir / 'sample_outputs'
+    
+#     print("-" * 20)
+#     print("Configurations Loaded Automatically")
+#     print(f"  Camera Name:          {camera_name}")
+#     print(f"  Season:               {camera_season}")
+#     print(f"  Image Path:           {camera_image_path}")
+#     print(f"  Pole Type:            {pole_type}")
+#     print(f"  Total Pole (cm):      {total_pole_cm}")
+#     print(f"  Pixel/cm Conversion:  {pixel_centimeter_conversion}")
+#     print(f"  Reference Image Idx:  {ref_img_path_actual}")
+#     print(f"  Location Info:        {location_information}")
+#     print(f"  Other Info:           {other_info}")
+#     print(f"  Base Output Dir:      {base_output_dir}")
+#     print("-" * 20)
 
 if saved_configs == 'Y': 
-    camera_name = 'TLS_N4W'
-    camera_season = '2016-2017'
-    #camera_image_path = '/Volumes/MyBook/poles_dataset/native_res_snex17/TLS-N4W' # Example Windows path
-    camera_image_path = '/Volumes/MyBook/snowpoles_dataset_master/raw_images/SnEx_Raleigh_2016-17/TLS-A1N'
-    pole_type = 'Full Pole'
-    total_pole_cm = 304.8 
-    pixel_centimeter_conversion = 0.264 
-    ref_img_path_actual = 9 
-    other_info = 'First 9 photos are foggy'
-    location_information ='(39.032, -108.216)'
-
-    # new crop feature in configs (in case picture is super noisy/ lots of poles and they don't tilt)
-    apply_crop = False
-    crop_coords = None
-
-    ##### clicked center for anchor point #####
-    clicked_x_center = None
+    # 1. LOAD CONFIGURATIONS
+    config_file = input("Enter the name of the config file (e.g., TLS_N4W_config.json): ").strip()
     
-    # Updated to create nested output structure
-    base_output_dir = Path("outputs")
+    try:
+        with open(config_file, 'r') as f:
+            config = json.load(f)
+    except FileNotFoundError:
+        print(f"Error: Could not find {config_file}. Please run with 'N' first to generate one.")
+        exit()
+
+    camera_name = config['camera_name']
+    camera_season = config['camera_season']
+    camera_image_path = config['camera_image_path']
+    pole_type = config.get('pole_type', 'Full Pole')
+    total_pole_cm = config['total_pole_cm']
+    pixel_centimeter_conversion = config['pixel_centimeter_conversion']
+    ref_img_path_actual = config['ref_img_path_actual']
+    other_info = config['other_info']
+    location_information = config['location_information']
+    apply_crop = config['apply_crop']
+    
+    # JSON saves tuples as lists, convert it back to a tuple if it exists
+    crop_coords = config.get('crop_coords')
+    if crop_coords is not None:
+        crop_coords = tuple(crop_coords)
+        
+    clicked_x_center = config.get('clicked_x_center')
+    base_output_dir = Path(config['base_output_dir'])
+
+    # Create output directories
     camera_out_dir = base_output_dir / camera_name
     csv_dir = camera_out_dir / 'csv'
     viz_dir = camera_out_dir / 'sample_outputs'
     
+    # Find reference image path so the rest of the script can use it
+    images = sorted(glob.glob(os.path.join(Path(camera_image_path), '*.[jJ][pP]*[gG]')))
+    if len(images) > 0:
+        ref_img_path = images[ref_img_path_actual - 1]
+    
     print("-" * 20)
-    print("Configurations Loaded Automatically")
+    print(f"Configurations Loaded Automatically from {config_file}")
     print(f"  Camera Name:          {camera_name}")
     print(f"  Season:               {camera_season}")
     print(f"  Image Path:           {camera_image_path}")
-    print(f"  Pole Type:            {pole_type}")
     print(f"  Total Pole (cm):      {total_pole_cm}")
     print(f"  Pixel/cm Conversion:  {pixel_centimeter_conversion}")
     print(f"  Reference Image Idx:  {ref_img_path_actual}")
     print(f"  Location Info:        {location_information}")
     print(f"  Other Info:           {other_info}")
     print(f"  Base Output Dir:      {base_output_dir}")
+    print(f"  Crop Coordinates:     {crop_coords}")
     print("-" * 20)
 
 ##### Start and metadata ####### 
@@ -117,6 +171,8 @@ if saved_configs == "N":
         total_pole_cm = float(total_pole_cm_input)
     else:
         total_pole_cm = None
+
+
     
     pixel_centimeter_conversion = input("What is the pixel_centimeter_conversion? put NA if unsure: ")
     if pixel_centimeter_conversion != 'NA':
@@ -207,7 +263,6 @@ if saved_configs == "N":
             crop_coords = None
         # ------------------------------------------
 
-    
     print("-" * 20)
     print("Configurations for Script")
     print(f"Camera ID:                   {camera_name}")
@@ -222,7 +277,6 @@ if saved_configs == "N":
     print(f"Camera Output Directory:     {camera_out_dir}")
     print(f"Apply Crop:                  {apply_crop}")
     print("-" * 20)
-
 
 ##########zoom function for calibration clicking ##########
 def enable_scroll_zoom_and_pan(ax, base_scale=1.2):
@@ -332,6 +386,7 @@ else:
     ref_img_path = images[ref_img_path_actual - 1]
 ##############################################################
 
+clicked_x_center = None
 
 ####### first get the pixel to centimeter conversion ###### 
 ## pull the 9th image or whatever image is lisetd for this:  ref_img_path_actual 
@@ -615,7 +670,7 @@ if os.path.exists(best_model_path):
 
 
     active_anchors = {} # This will store the expected X-coordinate of each pole
-    MAX_SHIFT_PX = 1000 # The max pixels a pole can move between frames before it's considered a "new" pole
+    MAX_SHIFT_PX = 100 # The max pixels a pole can move between frames before it's considered a "new" pole
     
     for i, img_path in tqdm.tqdm(enumerate(sample_images), total=len(sample_images)):
         base_name = os.path.basename(img_path)
@@ -658,26 +713,33 @@ if os.path.exists(best_model_path):
                 formatted_datetime = "Unknown" 
         with torch.no_grad():
             #IPython.embed()
+            #if i == 4: IPython.embed()
             detections = model.predict(image)
-            master_mask = detections.mask[0] if detections.mask is not None and len(detections.mask) > 0 else None
+            #master_mask = detections.mask[0] if detections.mask is not None and len(detections.mask) > 0 else None
             # 1. Process all detected bounding boxes
             current_detections = []
-            for xyxy in detections.xyxy:
+            
+            # CHANGED 'i' to 'det_idx' HERE!
+            for det_idx, xyxy in enumerate(detections.xyxy):
                 x_min, y_min, x_max, y_max = xyxy
                 dx = x_max - x_min
                 dy = y_max - y_min
                 x_center = (x_min + x_max) / 2 # Find the center of the pole
+                
+                # GRAB THE SPECIFIC MASK USING det_idx
+                current_mask = detections.mask[det_idx] if detections.mask is not None else None
                 
                 pole_length_px = math.hypot(dx, dy) if dx > 10 else dy
                 visible_length_cm = pole_length_px * conversion_factor
                 snow_depth_cm = total_pole_cm - visible_length_cm
 
                 # --- NEW SAFE TILT CALCULATION ---
-                ## could add the left tilt right tilt math to consoldate 
                 tilt_degrees = 0.0 # Default to 0 (perfectly vertical)
-                if dx > 10 and master_mask is not None:
+                
+                # USE current_mask INSTEAD OF master_mask
+                if dx > 10 and current_mask is not None:
                     # Look at mask inside this bbox
-                    y_ind, x_ind = np.where(master_mask)
+                    y_ind, x_ind = np.where(current_mask)
                     in_box = (x_ind >= int(x_min)) & (x_ind <= int(x_max)) & (y_ind >= int(y_min)) & (y_ind <= int(y_max))
                     y_in = y_ind[in_box]
                     x_in = x_ind[in_box]
@@ -686,7 +748,7 @@ if os.path.exists(best_model_path):
                         x_top_mask = x_in[np.argmin(y_in)]
                         x_bottom_mask = x_in[np.argmax(y_in)]
                         
-                        # Calculate difference in X (dy is already y_max - y_min)
+                        # Calculate difference in X
                         dx_tilt = x_bottom_mask - x_top_mask 
                         tilt_radians = math.atan2(dx_tilt, dy)
                         tilt_degrees = math.degrees(tilt_radians)
@@ -696,8 +758,10 @@ if os.path.exists(best_model_path):
                     'xyxy': xyxy,
                     'snowdepth': snow_depth_cm,
                     'pixellength': pole_length_px,
-                    'tilt_degrees': tilt_degrees
+                    'tilt_degrees': tilt_degrees,
+                    'mask': current_mask # <--- SAVE THE MASK HERE FOR THE DRAWING LOOP LATER
                 })
+
                 
             # ========================================================
             # 2. MATCHING LOGIC (The Rolling Anchor System)
@@ -740,37 +804,6 @@ if os.path.exists(best_model_path):
                         active_anchors[pole_id] = det['x_center']
                         assigned_poles[pole_id] = det
             else:
-                ## old anchor set-up doesn't account for the fact that sometimes false positives can come into view
-                # # Subsequent frames: Match new detections to existing anchors
-                # current_detections.sort(key=lambda d: d['x_center'])
-                # used_anchors = set()
-                
-                # for det in current_detections:
-                #     best_match_id = None
-                #     min_dist = float('inf')
-                    
-                #     # Check distances to all known anchors
-                #     for p_id, anchor_x in active_anchors.items():
-                #         if p_id in used_anchors:
-                #             continue
-                #         dist = abs(det['x_center'] - anchor_x)
-                #         if dist < min_dist:
-                #             min_dist = dist
-                #             best_match_id = p_id
-                    
-                #     # If the pole didn't jump insanely far, it's a match!
-                #     if best_match_id is not None and min_dist < MAX_SHIFT_PX:
-                #         assigned_poles[best_match_id] = det
-                #         active_anchors[best_match_id] = det['x_center'] # UPDATE ANCHOR TO NEW POSITION!
-                #         used_anchors.add(best_match_id)
-                #     else:
-                #         # If it shifted too far, or a brand new pole appeared, assign a new ID
-                #         new_id = f"Pole{len(active_anchors) + 1}"
-                #         active_anchors[new_id] = det['x_center']
-                #         assigned_poles[new_id] = det
-                #         used_anchors.add(new_id)
-                                # Subsequent frames: Global Nearest Neighbor matching
-
                 # 1. Calculate distance from every detection to every known anchor
                 matches = []
                 for det_idx, det in enumerate(current_detections):
@@ -790,7 +823,8 @@ if os.path.exists(best_model_path):
                     # If neither the detection nor the anchor have been used yet, assign them!
                     if det_idx not in used_det_idxs and p_id not in used_anchors:
                         assigned_poles[p_id] = current_detections[det_idx]
-                        active_anchors[p_id] = current_detections[det_idx]['x_center'] # UPDATE ANCHOR
+                        ## don't reassin ##
+                        #active_anchors[p_id] = current_detections[det_idx]['x_center'] # UPDATE ANCHOR
                         used_det_idxs.add(det_idx)
                         used_anchors.add(p_id)
                 
@@ -831,7 +865,7 @@ if os.path.exists(best_model_path):
             results_data.append(row_data)
 
         # Annotate
-        if i % 40 == 0: ## save every 20 for examples (fixed from "if i % 20:" which skips the 0th and multiples of 20)
+        if i % 1 == 0: ## save every 20 for examples (fixed from "if i % 20:" which skips the 0th and multiples of 20)
             h, w = image.shape[:2]
             thickness = sv.calculate_optimal_line_thickness(resolution_wh=(w, h))
             color_annotator = sv.ColorAnnotator(color=color)
@@ -840,23 +874,11 @@ if os.path.exists(best_model_path):
             annotated_image = image.copy()
             annotated_image = color_annotator.annotate(scene=annotated_image, detections=detections)
             annotated_image = polygon_annotator.annotate(scene=annotated_image, detections=detections)
-
-            # #######
-            # if detections.mask is not None:
-            #     for mask in detections.mask:
-            #         y_indices, x_indices = np.where(mask)
-            #         if len(y_indices) > 0:
-            #             top_idx = np.argmin(y_indices)
-            #             bottom_idx = np.argmax(y_indices)          
-            #             x_top, y_top = int(x_indices[top_idx]), int(y_indices[top_idx])
-            #             x_bottom, y_bottom = int(x_indices[bottom_idx]), int(y_indices[bottom_idx])
-            #             cv2.line(annotated_image, (x_top, y_top), (x_bottom, y_bottom), (98, 0, 255), thickness + 1)
-            # ######
-            
                    # Draw lines using the Master Mask and BBox Cookie Cutter
             for p in assigned_poles.values():
                 x_min, y_min, x_max, y_max = p['xyxy']
                 dx = x_max - x_min
+                pole_mask = p['mask']
                 
                 # If perfectly vertical, draw straight down the middle
                 if dx <= 10:
@@ -864,9 +886,9 @@ if os.path.exists(best_model_path):
                     pt1 = (x_center, int(y_min))
                     pt2 = (x_center, int(y_max))
                 else:
-                    if master_mask is not None:
+                    if pole_mask is not None:
                         # COOKIE CUTTER: Look at the Master Mask, but ONLY inside this BBox
-                        y_ind, x_ind = np.where(master_mask)
+                        y_ind, x_ind = np.where(pole_mask)
                         in_box = (x_ind >= int(x_min)) & (x_ind <= int(x_max)) & (y_ind >= int(y_min)) & (y_ind <= int(y_max))
                         y_in = y_ind[in_box]
                         x_in = x_ind[in_box]
@@ -898,7 +920,7 @@ if os.path.exists(best_model_path):
             # Create thumbnail and save
             pil_img.thumbnail((800, 800))
         
-            out_name = f"pred_{i+1}_{base_name}"
+            out_name = f"pred_{i+1}_teST_{base_name}"
             # Save to the new dynamic sample_outputs directory
             save_path = os.path.join(viz_dir, out_name)
 
